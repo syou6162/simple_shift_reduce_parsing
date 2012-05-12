@@ -1,11 +1,11 @@
-(ns simple_shift_reduce_parsing.core)
+(ns simple_shift_reduce_parsing.core
+  (:use simple_shift_reduce_parsing.feature
+	simple_shift_reduce_parsing.word))
 
 (use '[clojure.string :only (split)])
 
 (def filename "data/train.ulab")
 (def Root :root)
-
-(defstruct word :surface :pos-tag :idx)
 
 (defn read-mst-format-file [filename]
   (->> (split (slurp filename) #"\n\n")
@@ -21,37 +21,9 @@
 			  (vec (cons Root indexes)))))))
        (vec)))
 
-;; 取りうるactionの定義
-(def Right :right)
-(def Left :left)
-(def Shift :shift)
-
-(def actions #{Right Left Shift})
-
-;; 素性の定義
-(defstruct feature :type :str)
-
-(defmacro deffeature-fn
-  ([feature-name idx-op type]
-     `(defn ~feature-name [sentence# idx#]
-	(struct
-	 feature
-	 '~feature-name
-	 (get-in sentence# [(~idx-op idx#) ~type]))))
-  ([feature-name type]
-     `(deffeature-fn ~feature-name identity ~type)))
-
-(deffeature-fn zero-minus-word-feature dec :surface)
-(deffeature-fn zero-minus-pos-feature dec :pos-tag)
-
-(deffeature-fn zero-plus-word-feature :surface)
-(deffeature-fn zero-plus-pos-feature :pos-tag)
-
 (defn get-fv [sentence idx]
-  (let [feature-fns [zero-minus-word-feature
-		     zero-plus-word-feature
-		     zero-minus-pos-feature
-		     zero-plus-pos-feature]]
+  (let [feature-fns (vals (ns-interns
+			   'simple_shift_reduce_parsing.features))]
     (->> feature-fns
 	 (map (fn [feature-fn] (feature-fn sentence idx)))
 	 (vec))))
