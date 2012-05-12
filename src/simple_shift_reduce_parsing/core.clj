@@ -5,6 +5,8 @@
 (def filename "data/train.ulab")
 (def Root :root)
 
+(defstruct word :surface :pos-tag :idx)
+
 (defn read-mst-format-file [filename]
   (->> (split (slurp filename) #"\n\n")
        (map (fn [lines]
@@ -12,9 +14,11 @@
 		    (map (fn [line]
 			   (split line #"\t"))
 			 (split lines #"\n"))]
-		{:words (vec (cons Root words))
-		 :pos-tags (vec (cons Root pos-tags))
-		 :indexes (vec (cons Root indexes))})))
+		(vec (map (fn [w pos-tag idx]
+			    (struct word w pos-tag idx))
+			  (vec (cons Root words))
+			  (vec (cons Root pos-tags))
+			  (vec (cons Root indexes)))))))
        (vec)))
 
 ;; 取りうるactionの定義
@@ -27,29 +31,21 @@
 ;; 素性の定義
 (defstruct feature :type :str)
 
-(defn zero-minus-word-feature [sentence idx]
-  (struct
-   feature
-   "0-:word"
-   (get-in sentence [:words (dec idx)])))
+(defmacro deffeature-fn
+  ([feature-name idx-op type]
+     `(defn ~feature-name [sentence# idx#]
+	(struct
+	 feature
+	 '~feature-name
+	 (get-in sentence# [(~idx-op idx#) ~type]))))
+  ([feature-name type]
+     `(deffeature-fn ~feature-name identity ~type)))
 
-(defn zero-plus-word-feature [sentence idx]
-  (struct
-   feature
-   "0+:word"
-   (get-in sentence [:words idx])))
+(deffeature-fn zero-minus-word-feature dec :surface)
+(deffeature-fn zero-minus-pos-feature dec :pos-tag)
 
-(defn zero-minus-pos-feature [sentence idx]
-  (struct
-   feature
-   "0-:pos"
-   (get-in sentence [:pos-tags (dec idx)])))
-
-(defn zero-plus-pos-feature [sentence idx]
-  (struct
-   feature
-   "0+:pos"
-   (get-in sentence [:pos-tags idx])))
+(deffeature-fn zero-plus-word-feature :surface)
+(deffeature-fn zero-plus-pos-feature :pos-tag)
 
 (defn get-fv [sentence idx]
   (let [feature-fns [zero-minus-word-feature
@@ -61,6 +57,6 @@
 	 (vec))))
 
 (defn -main [& args]
-  (for [sentence (read-mst-format-file filename)
-      idx (range 1 (count (get-in sentence [:words])))]
-    (get-fv sentence idx)))
+  (count (for [sentence (read-mst-format-file filename)
+	       idx (range 1 (count sentence))]
+	   (get-fv sentence idx))))
