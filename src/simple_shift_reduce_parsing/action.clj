@@ -39,8 +39,9 @@
 		     :left left
 		     :shift shift})
 
-(defn generate-gold' [[idx sentence]]
-  (let [[lhs rhs] (map vec (split-at idx sentence))
+(defn generate-gold' [[action idx sentence]]
+  (let [[idx sentence] ((get action-mapping action identity) [idx sentence])
+	[lhs rhs] (map vec (split-at idx sentence))
 	left-word (last lhs)
 	right-word (first rhs)
 	next-action (cond (= 1 (count sentence)) nil
@@ -57,14 +58,12 @@
 			   (= (:target-idx right-word) (:original-idx left-word)))
 			  :right
 			  :else :shift)]
-    {:action next-action
-     :index idx
-     :sentence sentence}))
+    [next-action idx sentence]))
 
 (defn generate-gold [sentence]
-  (loop [m (generate-gold' [1 sentence])
-	 golds []]
-    (if (nil? (:action m))
-      golds
-      (let [new-m (generate-gold' (((:action m) action-mapping) [(:index m) (:sentence m)]))]
-	(recur new-m (conj golds new-m))))))
+  (->> (iterate generate-gold' [nil 1 sentence])
+       (rest) ;; 初期は捨てる
+       (take-while (fn [[action _ _]] (not (nil? action))))
+       (map (fn [[action idx sentence]] {:action action
+					 :index idx
+					 :sentence sentence}))))
