@@ -10,17 +10,14 @@
       {:surface "elianti", :pos-tag "NNP", :original-idx 4, :target-idx 3, :children []}
       {:surface ".", :pos-tag ".", :original-idx 5, :target-idx 3, :children []}])
 
-;; (deftest test-actions
-;;   (is (= ((comp right right right left left shift) [1 sentence])
-;; 	 [1 [{:surface :root, :pos-tag :root, :original-idx 0, :target-idx :root,
-;; 	      :children [{:surface "plays", :pos-tag "VBZ", :original-idx 3, :target-idx 0,
-;; 			  :children [{:surface "haag", :pos-tag "NNP", :original-idx 2, :target-idx 3,
-;; 				      :children [{:surface "ms.", :pos-tag "NNP", :original-idx 1, :target-idx 2, :children []}]}
-;; 				     {:surface "elianti", :pos-tag "NNP", :original-idx 4, :target-idx 3, :children []}
-;; 				     {:surface ".", :pos-tag ".", :original-idx 5, :target-idx 3, :children []}]}]}]])))
-
-;; (println (map :action (generate-gold sentence))) ; (shift left left right right right)
-
+(deftest test-actions
+  (is (= ((comp right right right left left shift) [1 sentence])
+	 [1 [{:surface :root, :pos-tag :root, :original-idx 0, :target-idx :root,
+	      :children [{:surface "plays", :pos-tag "VBZ", :original-idx 3, :target-idx 0,
+			  :children [{:surface "haag", :pos-tag "NNP", :original-idx 2, :target-idx 3,
+				      :children [{:surface "ms.", :pos-tag "NNP", :original-idx 1, :target-idx 2, :children []}]}
+				     {:surface "elianti", :pos-tag "NNP", :original-idx 4, :target-idx 3, :children []}
+				     {:surface ".", :pos-tag ".", :original-idx 5, :target-idx 3, :children []}]}]}]])))
 
 (let [sentence [{:surface :root, :pos-tag :root, :original-idx 0, :target-idx :root, :children []}
 		{:surface "the", :pos-tag "DT", :original-idx 1, :target-idx 4, :children []}

@@ -3,7 +3,7 @@
 	simple_shift_reduce_parsing.word
 	simple_shift_reduce_parsing.action))
 
-(use 'vijual)
+(use '[vijual :only (draw-tree)])
 (use '[clojure.string :only (split)])
 
 (defn extract-surface [sentence]
@@ -88,10 +88,14 @@
 ;; 	      (reduce + (map count (generate-gold sentence))))))
 
 (defn -main [& args]
-  (for [sentence (read-mst-format-file filename)
-	gold (generate-gold sentence)]
-    (let [sent (:sentence gold)
-	  action (:action gold)
-	  idx (:index gold)]
-      {:action action
-       :fvs (get-fv sentence idx)})))
+  (->> (for [sentence (read-mst-format-file filename)
+	     gold (generate-gold sentence)]
+	 (let [sent (:sentence gold)
+	       action (:action gold)
+	       idx (:index gold)]
+	   (get-fv sentence idx)))
+       (flatten)
+       (group-by :type)
+       (map (fn [[k v]] [k (count (set v))]))
+       (flatten)
+       (apply hash-map)))
