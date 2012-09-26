@@ -15,7 +15,7 @@
     [(safe-index idx (dec (count sentence)))
      (vec (concat (vec (butlast lhs))
 		  (concat [(update-in left-word
-				      [:children]
+				      [:modifiers]
 				      conj
 				      right-word)]
 			  (vec (drop 1 rhs)))))]))
@@ -28,7 +28,7 @@
     [(safe-index idx (dec (count sentence)))
      (vec (concat (vec (butlast lhs))
 		  (concat [(update-in right-word
-				      [:children]
+				      [:modifiers]
 				      #(vec (concat [%2] %1))
 				      left-word)]
 			  (vec (drop 1 rhs)))))]))
