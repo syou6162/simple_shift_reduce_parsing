@@ -47,15 +47,15 @@
 	next-action (cond (= 1 (count sentence)) nil
 			  (and
 			   ;; 係り先の単語に係る単語が左のコンテキストに一つもいない
-			   (reduce (fn [cum w] (and cum (not (= (:target-idx w) (:original-idx left-word)))))
+			   (reduce (fn [cum w] (and cum (not (= (:head w) (:idx left-word)))))
 				   true (butlast lhs))
-			   (= (:target-idx left-word) (:original-idx right-word)))
+			   (= (:head left-word) (:idx right-word)))
 			  :left
 			  (and
 			   ;; 係り先の単語に係る単語が右のコンテキストに一つもいない
-			   (reduce (fn [cum w] (and cum (not (= (:target-idx w) (:original-idx right-word)))))
+			   (reduce (fn [cum w] (and cum (not (= (:head w) (:idx right-word)))))
 				   true (rest rhs))
-			   (= (:target-idx right-word) (:original-idx left-word)))
+			   (= (:head right-word) (:idx left-word)))
 			  :right
 			  :else :shift)]
     [next-action idx sentence]))

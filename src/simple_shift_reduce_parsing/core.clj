@@ -19,19 +19,19 @@
 (defn read-mst-format-file [filename]
   (->> (split (slurp filename) #"\n\n")
        (map (fn [lines]
-	      (let [[words pos-tags target-indexes]
+	      (let [[words pos-tags heads]
 		    (map (fn [line]
 			   (split line #"\t"))
 			 (split lines #"\n"))]
-		(vec (map (fn [w pos-tag original-idx target-idx]
+		(vec (map (fn [w pos-tag idx head]
 			    (struct word w pos-tag
-				    original-idx target-idx []))
+				    idx head[]))
 			  (vec (cons Root words))
 			  (vec (cons Root pos-tags))
 			  (vec (range (inc (count words))))
 			  (vec (cons Root (map
 					   #(Integer/parseInt %)
-					   target-indexes))))))))
+					   heads))))))))
        (vec)))
 
 (defn get-fv [sentence idx]
