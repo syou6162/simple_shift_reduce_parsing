@@ -12,7 +12,7 @@
 (defn right [[idx sentence]]
   (let [[lhs rhs] (map vec (split-at idx sentence))
 	left-word (last lhs)
-	right-word (first rhs)]
+	right-word (assoc (first rhs) :head (:idx left-word))]
     [(safe-index idx (dec (count sentence)))
      (vec (concat (vec (butlast lhs))
 		  (concat [(update-in left-word
@@ -24,8 +24,8 @@
 ;; [[a] [b] [c] [d]]でbとcの間でleft => [[a] [c [b]] [d]]
 (defn left [[idx sentence]]
   (let [[lhs rhs] (map vec (split-at idx sentence))
-	left-word (last lhs)
-	right-word (first rhs)]
+	right-word (first rhs)
+        left-word (assoc (last lhs) :head (:idx right-word))]
     [(safe-index idx (dec (count sentence)))
      (vec (concat (vec (butlast lhs))
 		  (concat [(update-in right-word
