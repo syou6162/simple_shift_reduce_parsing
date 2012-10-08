@@ -73,4 +73,4 @@
   (map (fn [chunk]
          (vector (:action chunk)
                  (get-fv (:sentence chunk) (:index chunk))))
-       (generate-gold sentence)))
+       (generate-gold-seq-of-actions sentence)))
