@@ -2,9 +2,12 @@
   (:use simple_shift_reduce_parsing.feature
 	simple_shift_reduce_parsing.word
 	simple_shift_reduce_parsing.action
-        simple_shift_reduce_parsing.topological_sort))
+        simple_shift_reduce_parsing.topological_sort)
+  (:use [fobos-multiclass-clj.multiclass
+         :only (multiclass-examples argmax-label get-models)]))
 
 (use '[clojure.string :only (split)])
+(use '[vijual :only (draw-tree)])
 
 (defn extract-surfaces [sentence]
   (if (not (vector? sentence))
@@ -34,26 +37,35 @@
 					   heads))))))))
        (vec)))
 
-(defn get-fv [sentence idx]
-  (let [feature-fns (vals (ns-interns
-			   'simple_shift_reduce_parsing.features))]
-    (->> feature-fns
-	 (map (fn [feature-fn] (feature-fn sentence idx)))
-	 (vec))))
+(defn parse [models sentence]
+  (let [init-state [1 sentence]
+        sent-length (count sentence)]
+    (loop [state init-state
+           seq-of-actions []]
+      (let [[idx sent] state]
+        (cond
+         (= (count sent) 1)
+         (->> (extract-surfaces sent)
+              (draw-tree))
 
-;; (defn -main [& args]
-;;   (reduce + (for [sentence (read-mst-format-file filename)]
-;; 	      (reduce + (map count (generate-gold sentence))))))
+         (and (>= (count seq-of-actions) sent-length)
+              (every? (partial = :shift) (take-last (inc sent-length) seq-of-actions)))
+         (count sent)
+
+         :else (let [action (argmax-label models (get-fv sent idx))]
+                 (recur
+                  ((action-mapping action) [idx sent])
+                  (conj seq-of-actions action))))))))
 
 (defn -main [& args]
-  (->> (for [sentence (read-mst-format-file filename)
-	     gold (generate-gold sentence)]
-	 (let [sent (:sentence gold)
-	       action (:action gold)
-	       idx (:index gold)]
-	   (get-fv sentence idx)))
-       (flatten)
-       (group-by :type)
-       (map (fn [[k v]] [k (count (set v))]))
-       (flatten)
-       (apply hash-map)))
+  (let [examples (for [sentence (read-mst-format-file filename)] sentence)
+        training-examples (multiclass-examples
+                           (for [sentence (read-mst-format-file filename)
+                                 gold (generate-gold sentence)]
+                             gold))
+        iter 10
+        eta 1.0
+        lambda 1.0
+        models (get-models training-examples iter eta lambda)]
+    (dorun (map (partial parse models) examples)))
+  nil)
