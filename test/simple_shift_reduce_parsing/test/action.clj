@@ -10,6 +10,55 @@
    {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
    {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}])
 
+(deftest test-shift
+  (is (= (shift [2 sentence])
+           [3 [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}
+               {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+               {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+               {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+               {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+               {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]]))
+  (is (= (shift [5 sentence])
+         [1 [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}
+             {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+             {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+             {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]])))
+
+(deftest test-right
+  (is (= (right [1 sentence])
+         [1 [{:surface :root, :pos-tag :root, :idx 0, :head :root,
+              :modifiers [{:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}]}
+             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+             {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+             {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]]))
+
+  (is (= (right [5 sentence])
+         [1 [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}
+             {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+             {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3,
+              :modifiers [{:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]}]])))
+
+(deftest test-left
+  (is (= (left [1 sentence])
+         [1 [{:surface "ms.", :pos-tag "NNP", :idx 1, :head 2,
+              :modifiers [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}]}
+             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+             {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+             {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]]))
+
+  (is (= (left [5 sentence])
+         [1 [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}
+             {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+             {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers [{:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}]}]])))
+
 (deftest test-actions
   (is (= ((comp right right right left left shift) [1 sentence])
 	 [1 [{:surface :root, :pos-tag :root, :idx 0, :head :root,
