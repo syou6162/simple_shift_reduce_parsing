@@ -3,9 +3,6 @@
   (:use [simple_shift_reduce_parsing.core])
   (:use [clojure.test]))
 
-(deftest replace-me ;; FIXME: write
-  (is false "No tests have been written."))
-
 (def surfaces ["the" "luxury" "auto" "maker" "last"
                "year" "sold" "1,214" "cars" "in" "the" "u.s."])
 (def pos-tags ["DT" "NN" "NN" "NN" "JJ" "NN" "VBD"
