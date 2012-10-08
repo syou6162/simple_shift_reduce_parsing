@@ -16,7 +16,19 @@
       (apply conj [(:surface sentence)] (map extract-surfaces (:modifiers sentence))))
     (vec (map extract-surfaces sentence))))
 
-(def filename "data/train.ulab")
+(defn extract-heads' [sentence result]
+  (if (not (vector? sentence))
+    (if (empty? (:modifiers sentence))
+      [{:head (:head sentence) :idx (:idx sentence)}]
+      (vec (apply concat (conj result {:head (:head sentence) :idx (:idx sentence)})
+                  (map #(extract-heads' % result) (:modifiers sentence)))))
+    (vec (map #(extract-heads' % result) sentence))))
+
+(defn extract-heads [sentence]
+  (map :head (sort-by :idx (first (extract-heads' sentence [])))))
+
+; (def filename "data/train.ulab")
+(def filename "data/peen.ulab")
 (def Root :root)
 
 (defn read-mst-format-file [filename]
@@ -45,12 +57,20 @@
       (let [[idx sent] state]
         (cond
          (= (count sent) 1)
-         (->> (extract-surfaces sent)
-              (draw-tree))
+         (let [num-of-correct (reduce + (map (fn [[gold predict]]
+                                               (if (= gold predict) 1.0 0.0))
+                                             (map vector (rest (map :head sentence)) (rest (extract-heads sent)))))]
+           (println (str num-of-correct "\t" sent-length))
+           ; (println (/ num-of-correct sent-length))
+           )
+
+         ;; (->> (extract-surfaces sent)
+         ;;      (draw-tree))
 
          (and (>= (count seq-of-actions) sent-length)
               (every? (partial = :shift) (take-last (inc sent-length) seq-of-actions)))
-         (count sent)
+         nil
+         ; (println (str 0.0 "\t" sent-length))
 
          :else (let [action (argmax-label models (get-fv sent idx))]
                  (recur
@@ -67,5 +87,4 @@
         eta 1.0
         lambda 1.0
         models (get-models training-examples iter eta lambda)]
-    (dorun (map (partial parse models) examples)))
-  nil)
+    (dorun (map (partial parse models) examples))))
