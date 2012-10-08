@@ -5,7 +5,7 @@
 
 (defmacro deffeature-fn
   ([feature-name idx-op type]
-     (swap! feature-names conj `~feature-name)
+     (swap! feature-names conj (resolve feature-name))
      `(defn ~feature-name [sentence# idx#]
 	(struct
 	 feature
@@ -25,3 +25,8 @@
 
 (deffeature-fn one-plus-word-feature inc :surface)
 (deffeature-fn one-plus-pos-feature inc :pos-tag)
+
+(defn get-fv [sentence idx]
+  (->> (seq @feature-names)
+       (map (fn [feature-fn] (vector (feature-fn sentence idx) 1)))
+       (vec)))

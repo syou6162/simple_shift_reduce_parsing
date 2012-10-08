@@ -1,4 +1,5 @@
-(ns simple_shift_reduce_parsing.action)
+(ns simple_shift_reduce_parsing.action
+  (:use simple_shift_reduce_parsing.feature))
 
 (defn safe-index [idx sentence-length]
   (if (> sentence-length idx) idx 1))
@@ -67,3 +68,9 @@
        (map (fn [[action idx sentence]] {:action action
 					 :index idx
 					 :sentence sentence}))))
+
+(defn generate-gold [sentence]
+  (map (fn [chunk]
+         (vector (:action chunk)
+                 (get-fv (:sentence chunk) (:index chunk))))
+       (generate-gold sentence)))
