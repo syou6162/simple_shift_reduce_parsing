@@ -5,12 +5,12 @@
 
 (defmacro deffeature-fn
   ([feature-name idx-op type]
-     (swap! feature-names conj (resolve feature-name))
-     `(defn ~feature-name [sentence# idx#]
-	(struct
-	 feature
-         '~feature-name
-	 (get-in sentence# [(~idx-op idx#) ~type]))))
+     `(let [name# (defn ~feature-name [sentence# idx#]
+                    (struct
+                     feature
+                     '~feature-name
+                     (get-in sentence# [(~idx-op idx#) ~type])))]
+        (swap! feature-names conj name#)))
   ([feature-name type]
      `(deffeature-fn ~feature-name identity ~type)))
 
