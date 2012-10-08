@@ -39,7 +39,7 @@
 		     :left left
 		     :shift shift})
 
-(defn generate-gold' [[action idx sentence]]
+(defn generate-gold-seq-of-actions' [[action idx sentence]]
   (let [[idx sentence] ((get action-mapping action identity) [idx sentence])
 	[lhs rhs] (map vec (split-at idx sentence))
 	left-word (last lhs)
@@ -60,8 +60,8 @@
 			  :else :shift)]
     [next-action idx sentence]))
 
-(defn generate-gold [sentence]
-  (->> (iterate generate-gold' [nil 1 sentence])
+(defn generate-gold-seq-of-actions [sentence]
+  (->> (iterate generate-gold-seq-of-actions' [nil 1 sentence])
        (rest) ;; 初期は捨てる
        (take-while (fn [[action _ _]] (not (nil? action))))
        (map (fn [[action idx sentence]] {:action action

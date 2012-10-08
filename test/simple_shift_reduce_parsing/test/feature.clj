@@ -1,6 +1,6 @@
-(ns simple_shift_reduce_parsing.test.features
+(ns simple_shift_reduce_parsing.test.feature
   (:use [clojure.test])
-  (:use [simple_shift_reduce_parsing.features]))
+  (:use [simple_shift_reduce_parsing.feature]))
 
 (deftest test-feature
  (let [sentence [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}

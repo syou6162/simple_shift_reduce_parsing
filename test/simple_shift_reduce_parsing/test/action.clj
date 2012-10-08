@@ -85,4 +85,4 @@
     (is (= '(:shift :shift :shift :left :shift :left :left :shift
                     :left :shift :shift :left :shift :shift :left
                     :shift :right :shift :right :shift :left :left :right :right)
-           (map :action (generate-gold sentence))))))
+           (map :action (generate-gold-seq-of-actions sentence))))))
