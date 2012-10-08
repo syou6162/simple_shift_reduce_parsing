@@ -5,4 +5,5 @@
                  [fobos_multiclass_clj "0.1.0-SNAPSHOT"]
 		 [info.yasuhisay/vijual "0.2.0-SNAPSHOT"]]
   :plugins [[lein-swank "1.4.4"]]
+  :jvm-opts ["-Xmx8g" "-server" "-Dfile.encoding=UTF-8"]
   :main simple_shift_reduce_parsing.core)
