@@ -14,6 +14,9 @@
   ([feature-name type]
      `(deffeature-fn ~feature-name identity ~type)))
 
+(deffeature-fn two-minus-word-feature (fn [x] (- x 3)) :surface)
+(deffeature-fn two-minus-pos-feature (fn [x] (- x 3)) :pos-tag)
+
 (deffeature-fn one-minus-word-feature (fn [x] (- x 2)) :surface)
 (deffeature-fn one-minus-pos-feature (fn [x] (- x 2)) :pos-tag)
 
@@ -25,6 +28,9 @@
 
 (deffeature-fn one-plus-word-feature inc :surface)
 (deffeature-fn one-plus-pos-feature inc :pos-tag)
+
+(deffeature-fn two-plus-word-feature (fn [x] (+ x 2)) :surface)
+(deffeature-fn two-plus-pos-feature (fn [x] (+ x 2)) :pos-tag)
 
 (defn get-fv [sentence idx]
   (->> (seq @feature-names)
