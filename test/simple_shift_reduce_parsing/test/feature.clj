@@ -9,7 +9,6 @@
                                :modifiers [{:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}]}
                               {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}]}
                  {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]]
-   
    (are [x y] (= x y)
         (one-minus-word-feature sentence 2)
         {:type 'one-minus-word-feature, :str :root}
@@ -22,6 +21,12 @@
         
         (zero-minus-pos-feature sentence 2)
         {:type 'zero-minus-pos-feature, :str "VBZ"}
+
+        (zero-minus-children-word-features sentence 2)
+        (list {:type 'zero-minus-children-word-features, :str "haag"} {:type 'zero-minus-children-word-features, :str "elianti"})
+
+        (zero-minus-children-pos-features sentence 2)
+        (list {:type 'zero-minus-children-pos-features, :str "NNP"} {:type 'zero-minus-children-pos-features, :str "NNP"})
         
         (zero-plus-word-feature sentence 2)
         {:type 'zero-plus-word-feature, :str "."}
@@ -33,4 +38,7 @@
         {:type 'one-plus-word-feature, :str nil}
         
         (one-plus-pos-feature sentence 2)
-        {:type 'one-plus-pos-feature, :str nil})))
+        {:type 'one-plus-pos-feature, :str nil})
+   
+   (is (every? #(not (nil? %)) (map (comp :str first) (get-fv sentence 1))))
+   (is (every? (partial = 1) (map (comp second) (get-fv sentence 1))))))
