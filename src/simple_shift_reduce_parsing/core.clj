@@ -60,27 +60,20 @@
        (vec)))
 
 (defn parse [models sentence]
+  "Return parsed sentence. If the number of 'shift' action
+   in the last seq-of-actions exceeds the nuber of words
+   in the sentence, return nil (This means parse failed)."
   (let [init-state [1 sentence]
         sent-length (count sentence)]
     (loop [state init-state
            seq-of-actions []]
       (let [[idx sent] state]
         (cond
-         (= (count sent) 1)
-         (let [num-of-correct (reduce + (map (fn [[gold predict]]
-                                               (if (= gold predict) 1.0 0.0))
-                                             (map vector (rest (map :head sentence)) (rest (extract-heads sent)))))]
-           (println (str num-of-correct "\t" sent-length))
-           ; (println (/ num-of-correct sent-length))
-           )
-
-         ;; (->> (extract-surfaces sent)
-         ;;      (draw-tree))
+         (= (count sent) 1) sent
 
          (and (>= (count seq-of-actions) sent-length)
               (every? (partial = :shift) (take-last (inc sent-length) seq-of-actions)))
          nil
-         ; (println (str 0.0 "\t" sent-length))
 
          :else (let [action (argmax-label models (get-fv sent idx))]
                  (recur
