@@ -32,6 +32,33 @@
                   ["year" ["last"]] ["cars" ["1,214"]]
                   ["in" ["u.s." ["the"]]]]]])))
 
+(deftest get-dependency-accuracy-test
+  (let [original-sentences [[{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}
+                             {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+                             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+                             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+                             {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+                             {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]
+                            [{:surface :root, :pos-tag :root, :idx 0, :head :root, :modifiers []}
+                             {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+                             {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+                             {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
+                             {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+                             {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]]
+        parsed-sentences [[{:surface :root, :pos-tag :root, :idx 0, :head :root,
+                            :modifiers [{:surface "plays", :pos-tag "VBZ", :idx 3, :head 0,
+                                         :modifiers [{:surface "haag", :pos-tag "NNP", :idx 2, :head 3,
+                                                      :modifiers [{:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}]}
+                                                     {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+                                                     {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]}]}]
+                          [{:surface :root, :pos-tag :root, :idx 0, :head :root,
+                            :modifiers [{:surface "plays", :pos-tag "VBZ", :idx 3, :head 0,
+                                         :modifiers [{:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
+                                                     {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
+                                                     {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
+                                                     {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]}]}]]]
+    (is (= (get-dependency-accuracy original-sentences parsed-sentences) 0.8333333333333334))))
+
 (use '[vijual :only (draw-tree)])
 
 (-> (dep surfaces pos-tags heads)

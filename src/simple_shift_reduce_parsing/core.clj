@@ -80,6 +80,21 @@
                   ((action-mapping action) [idx sent])
                   (conj seq-of-actions action))))))))
 
+(defn get-dependency-accuracy [original-sentences parsed-sentences]
+  "original-sentences: flat sentences
+   parsed-sentences: sentences with hierarchical structure"
+  (let [pairs (map (fn [[original-sentence parsed-sentence]]
+                     (let [num-of-correct-heads (reduce + (map (fn [[gold predict]]
+                                                                 (if (= gold predict) 1.0 0.0))
+                                                               (map vector
+                                                                    (rest (map :head original-sentence))
+                                                                    (rest (extract-heads parsed-sentence)))))]
+                       (vector num-of-correct-heads (count original-sentence))))
+                   (map vector original-sentences parsed-sentences))
+        corrects (map first pairs)
+        lengths (map second pairs)]
+    (/ (reduce + corrects) (reduce + lengths))))
+
 (defn -main [& args]
   (let [examples (for [sentence (read-mst-format-file filename)] sentence)
         training-examples (multiclass-examples
