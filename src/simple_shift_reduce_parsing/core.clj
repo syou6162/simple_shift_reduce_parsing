@@ -32,6 +32,16 @@
 (def Root :root)
 
 (defn read-mst-format-file [filename]
+  "Read correct parsed sentences from mst formal file.
+   File format is as follows:
+
+   ms.     haag    plays   elianti .
+   NNP     NNP     VBZ     NNP     .
+   2       3       0       3       3
+
+   he      has     n't     been    able    to      replace the     m'bow   cabal   .
+   PRP     VBZ     RB      VBN     JJ      TO      VB      DT      NNP     NN      .
+   2       0       2       2       4       7       5       10      10      7       2"
   (->> (split (slurp filename) #"\n\n")
        (map (fn [lines]
 	      (let [[words pos-tags heads]
