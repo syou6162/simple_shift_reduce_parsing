@@ -28,12 +28,12 @@
          {:type 'zero-plus-pos-feature, :str "NNP"})))
 
 (deftest leftmost-dependent-of-input-pos-feature-test
-  (let [sentence [{:surface :root, :pos-tag :root, :idx 0, :head -1, :modifiers []}
-                  {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2, :modifiers []}
-                  {:surface "haag", :pos-tag "NNP", :idx 2, :head 3, :modifiers []}
-                  {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0, :modifiers []}
-                  {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3, :modifiers []}
-                  {:surface ".", :pos-tag ".", :idx 5, :head 3, :modifiers []}]
+  (let [sentence [{:surface :root, :pos-tag :root, :idx 0, :head -1}
+                  {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2}
+                  {:surface "haag", :pos-tag "NNP", :idx 2, :head 3}
+                  {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0}
+                  {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3}
+                  {:surface ".", :pos-tag ".", :idx 5, :head 3}]
         init-config ((comp action/left action/shift action/shift)
                      (config/make-Configuration sentence))]
     (is (= (leftmost-dependent-of-input-pos-feature init-config)
