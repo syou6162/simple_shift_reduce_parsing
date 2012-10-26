@@ -125,9 +125,9 @@
            result []]
       (if (= actions-idx (count actions))
         result
-        (let [next-action (nth actions actions-idx)
-              next-config ((action/action-mapping next-action) config)]
+        (let [current-action (nth actions actions-idx)
+              next-config ((action/action-mapping current-action) config)]
           (recur
            next-config
            (inc actions-idx)
-           (conj result [next-action (get-fv config)])))))))
+           (conj result [current-action (get-fv config)])))))))
