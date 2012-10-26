@@ -62,6 +62,8 @@
               old-input :input
               old-relation :relation
               :as config}]
+  "Right operation for configuration
+   <n | S, n' | I, A> => <n' | n | S, I, A \\cup {(n, n')}>"
   (if (rightable? config)
     (let [n (peek old-stack) ; head
           n' (first old-input) ; modifier
