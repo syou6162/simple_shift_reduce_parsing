@@ -6,7 +6,7 @@
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
 (defstruct feature :type :str)
-(def feature-names (atom #{}))
+(def feature-names (atom []))
 
 (defn get-stack-idx [stack idx]
   (let [n (count stack)]
