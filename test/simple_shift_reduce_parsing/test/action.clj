@@ -161,4 +161,4 @@
 (deftest get-gold-actions-test
   (is (= (action/get-gold-actions
           (config/make-Configuration sentence))
-         [:shift :shift :left :shift :reduce :right :right :reduce :right])))
+         [:shift :shift :left :shift :left :right :right :reduce :right])))
