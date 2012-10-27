@@ -67,13 +67,39 @@
            {:type 'rightmost-dependent-of-stack-pos-feature, :str "NNP"}))))
 
 (deftest feature-bigram-test
-  (is (= (feature-bigram (struct feature 'hoge :fuga)
-                         (struct feature 'hoge :fuga))
-         {:type 'hoge-and-hoge, :str ":fuga-and-:fuga"})))
+  (is (= (feature-bigram (struct feature 'hoge "fuga")
+                         (struct feature 'hoge "fuga"))
+         {:type 'hoge-and-hoge, :str "fuga-and-fuga"})))
 
 (deftest combinational-features-test
-  (is (= (combinational-features [(struct feature 'hoge1 :hoge1)
-                                  (struct feature 'hoge2 :hoge2)])
-         [{:type 'hoge1, :str :hoge1}
-          {:type 'hoge2, :str :hoge2}
-          {:type 'hoge1-and-hoge2, :str ":hoge1-and-:hoge2"}])))
+  (are [x y] (= x y)
+       (combinational-features [(struct feature 'hoge1 "hoge1")
+                                (struct feature 'hoge2 "hoge2")])
+       [{:type 'hoge1, :str "hoge1"}
+        {:type 'hoge2, :str "hoge2"}
+        {:type 'hoge1-and-hoge2, :str "hoge1-and-hoge2"}]
+
+       (combinational-features [(struct feature 'hoge1 "hoge1")
+                                (struct feature 'hoge2 "hoge2")
+                                (struct feature 'hoge3 "hoge3")])
+       [{:type 'hoge1, :str "hoge1"}
+        {:type 'hoge2, :str "hoge2"}
+        {:type 'hoge3, :str "hoge3"}
+        {:type 'hoge1-and-hoge2, :str "hoge1-and-hoge2"}
+        {:type 'hoge1-and-hoge3, :str "hoge1-and-hoge3"}
+        {:type 'hoge2-and-hoge3, :str "hoge2-and-hoge3"}]
+
+       (combinational-features [(struct feature 'hoge1 "hoge1")
+                                (struct feature 'hoge2 "hoge2")
+                                (struct feature 'hoge3 "hoge3")
+                                (struct feature 'hoge4 "hoge4")])
+       [{:type 'hoge1, :str "hoge1"}
+        {:type 'hoge2, :str "hoge2"}
+        {:type 'hoge3, :str "hoge3"}
+        {:type 'hoge4, :str "hoge4"}
+        {:type 'hoge1-and-hoge2, :str "hoge1-and-hoge2"}
+        {:type 'hoge1-and-hoge3, :str "hoge1-and-hoge3"}
+        {:type 'hoge1-and-hoge4, :str "hoge1-and-hoge4"}
+        {:type 'hoge2-and-hoge3, :str "hoge2-and-hoge3"}
+        {:type 'hoge2-and-hoge4, :str "hoge2-and-hoge4"}
+        {:type 'hoge3-and-hoge4, :str "hoge3-and-hoge4"}]))
