@@ -13,7 +13,8 @@
         input (vec (rest old-input))]
     (-> configuration
         (assoc :stack stack)
-        (assoc :input input))))
+        (assoc :input input)
+        (vary-meta update-in [:prev-actions] conj :shift))))
 
 (defn reducable? [config]
   (or (not (empty? (:stack config)))
@@ -28,7 +29,8 @@
   (if (reducable? configuration)
     (let [stack (pop old-stack)]
       (-> configuration
-          (assoc :stack stack)))
+          (assoc :stack stack)
+          (vary-meta update-in [:prev-actions] conj :reduce)))
     (shift configuration)))
 
 (defn leftable? [config]
@@ -50,7 +52,8 @@
       (assert (not (empty? old-input)))
       (-> config
           (assoc :stack stack)
-          (assoc :relations relations)))
+          (assoc :relations relations)
+          (vary-meta update-in [:prev-actions] conj :left)))
     (reduce config)))
 
 (defn rightable? [config]
@@ -74,7 +77,8 @@
       (-> config
           (assoc :stack stack)
           (assoc :input input)
-          (assoc :relations relations)))
+          (assoc :relations relations)
+          (vary-meta update-in [:prev-actions] conj :right)))
     (reduce config)))
 
 (def action-mapping {:left left
