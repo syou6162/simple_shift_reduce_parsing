@@ -42,14 +42,16 @@
 
    ms.     haag    plays   elianti .
    NNP     NNP     VBZ     NNP     .
+   DEP     NP-SBJ  ROOT    NP-OBJ  DEP
    2       3       0       3       3
 
-   he      has     n't     been    able    to      replace the     m'bow   cabal   .
-   PRP     VBZ     RB      VBN     JJ      TO      VB      DT      NNP     NN      .
-   2       0       2       2       4       7       5       10      10      7       2"
+   the     luxury  auto    maker   last    year    sold    1,214   cars    in      the     u.s.
+   DT      NN      NN      NN      JJ      NN      VBD     CD      NNS     IN      DT      NNP
+   DEP     DEP     DEP     NP-SBJ  DEP     NP      ROOT    DEP     NP-OBJ  PP      DEP     NP
+   4       4       4       7       6       7       0       9       7       7       12      10"
   (->> (split (slurp filename) #"\n\n")
        (map (fn [lines]
-	      (let [[words pos-tags heads]
+	      (let [[words pos-tags labels heads]
 		    (map (fn [line]
 			   (map clojure.string/lower-case (split line #"\t")))
                          (split lines #"\n"))]
@@ -95,8 +97,8 @@
 (defn- get-cli-opts [args]
   (cli/cli args
            ["--mode"]
-	   ["--training-filename" "File name of training" :default "./data/train.ulab"]
-           ["--test-filename" "File name of test" :default "./data/test.ulab"]
+	   ["--training-filename" "File name of training" :default "./data/train.lab"]
+           ["--test-filename" "File name of test" :default "./data/test.lab"]
            ["--model-filename" "File name of the (saved|load) model" :default "parsing.model"]
 	   ["--max-iter" "Number of maximum iterations" :default 10 :parse-fn #(Integer. %)]
            ["--eta" "Fobos hyper-parameter for update step" :default 1.0 :parse-fn #(Double. %)]
