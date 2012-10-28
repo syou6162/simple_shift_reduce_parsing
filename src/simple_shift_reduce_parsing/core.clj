@@ -1,7 +1,7 @@
 (ns simple_shift_reduce_parsing.core
   (:use simple_shift_reduce_parsing.util
         simple_shift_reduce_parsing.feature
-	simple_shift_reduce_parsing.word
+        simple_shift_reduce_parsing.evaluation
         simple_shift_reduce_parsing.topological_sort)
   (:use [clj-utils.io :only (serialize deserialize)])
   (:use [fobos-multiclass-clj.util])
@@ -76,23 +76,6 @@
                 pairs))
       (let [action (argmax-label models (get-fv config))]
         (recur ((action/action-mapping action) config))))))
-
-(defn get-dependency-accuracy [original-sentences parsed-sentences]
-  "original-sentences: flat sentences
-   parsed-sentences: sentences with hierarchical structure"
-  (let [original-sentences (rest original-sentences) ;; remove root
-        parsed-sentences (rest parsed-sentences) ;; remove root
-        pairs (map (fn [[original-sentence parsed-sentence]]
-                     (let [num-of-correct-heads (reduce + (map (fn [[gold predict]]
-                                                                 (if (= gold predict) 1.0 0.0))
-                                                               (map vector
-                                                                    (map :head original-sentence)
-                                                                    (map :head parsed-sentence))))]
-                       (vector num-of-correct-heads (count original-sentence))))
-                   (map vector original-sentences parsed-sentences))
-        corrects (map first pairs)
-        lengths (map second pairs)]
-    (/ (reduce + corrects) (reduce + lengths))))
 
 (defn- get-cli-opts [args]
   (cli/cli args
