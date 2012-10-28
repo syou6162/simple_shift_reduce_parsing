@@ -3,7 +3,8 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.cli "0.2.1"]
                  [fobos_multiclass_clj "0.1.4"]
-                 [dorothy "0.0.3"]]
+                 [dorothy "0.0.3"]
+                 [info.yasuhisay/clj-utils "0.1.0-SNAPSHOT"]]
   :plugins [[lein-swank "1.4.4"]]
   :jvm-opts ["-Xmx8g" "-server" "-Dfile.encoding=UTF-8"]
   :main simple_shift_reduce_parsing.core)

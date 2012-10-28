@@ -3,6 +3,7 @@
         simple_shift_reduce_parsing.feature
 	simple_shift_reduce_parsing.word
         simple_shift_reduce_parsing.topological_sort)
+  (:use [clj-utils.io :only (serialize deserialize)])
   (:use [fobos-multiclass-clj.util])
   (:use [fobos-multiclass-clj.multiclass
          :only (multiclass-examples argmax-label get-models get-label-scores)])
@@ -100,14 +101,6 @@
 	   ["--max-iter" "Number of maximum iterations" :default 10 :parse-fn #(Integer. %)]
            ["--eta" "Fobos hyper-parameter for update step" :default 1.0 :parse-fn #(Double. %)]
            ["--lambda" "Fobos hyper-parameter for regularization" :default 0.005 :parse-fn #(Double. %)]))
-
-(defn serialize [o filename]
-  (with-open [outp (-> (File. filename) java.io.FileOutputStream. java.io.ObjectOutputStream.)]
-    (.writeObject outp o)))
-
-(defn deserialize [filename]
-  (with-open [inp (-> (File. filename) java.io.FileInputStream. java.io.ObjectInputStream.)]
-    (.readObject inp)))
 
 (defn train-models [filename max-iter eta lambda model-filename]
   (let [training-examples (multiclass-examples
