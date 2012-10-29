@@ -1,5 +1,40 @@
 (ns simple_shift_reduce_parsing.util
+  (:use [clj-utils.io :only (serialize deserialize)])
+  (:use [simple_shift_reduce_parsing.word])
+  (:use [clojure.string :only (split)])
   (:use [dorothy.core]))
+
+(def Root :root)
+
+(defn read-mst-format-file [filename]
+  "Read correct parsed sentences from mst formal file.
+   File format is as follows:
+
+   ms.     haag    plays   elianti .
+   NNP     NNP     VBZ     NNP     .
+   DEP     NP-SBJ  ROOT    NP-OBJ  DEP
+   2       3       0       3       3
+
+   the     luxury  auto    maker   last    year    sold    1,214   cars    in      the     u.s.
+   DT      NN      NN      NN      JJ      NN      VBD     CD      NNS     IN      DT      NNP
+   DEP     DEP     DEP     NP-SBJ  DEP     NP      ROOT    DEP     NP-OBJ  PP      DEP     NP
+   4       4       4       7       6       7       0       9       7       7       12      10"
+  (->> (split (slurp filename) #"\n\n")
+       (map (fn [lines]
+	      (let [[words pos-tags labels heads]
+		    (map (fn [line]
+			   (map clojure.string/lower-case (split line #"\t")))
+                         (split lines #"\n"))]
+		(vec (map (fn [w pos-tag idx head]
+			    (struct word w pos-tag
+				    idx head))
+			  (vec (cons Root words))
+			  (vec (cons Root pos-tags))
+			  (vec (range (inc (count words))))
+			  (vec (cons -1 (map
+                                         #(Integer/parseInt %)
+                                         heads))))))))
+       (vec)))
 
 (defn save-dependency-tree [sent filename]
   (let [deps (for [word sent :when (and (not (zero? (:idx word))) ;; skip root node
@@ -14,3 +49,36 @@
         digraph
         dot
         (save! filename {:format :pdf}))))
+
+(defn print-mst-format-file [sentences]
+  (doseq [sent sentences]
+    (let [sent (rest sent)
+          surfaces (map :surface sent)
+          pos-tags (map :pos-tag sent)
+          heads (map (fn [w] (if (:head w) (:head w) 0)) sent)]
+      (do
+        (println (apply str (interpose "\t" surfaces)))
+        (println (apply str (interpose "\t" pos-tags)))
+        (println (apply str (interpose "\t" (repeat (count sent) "_"))))
+        (println (apply str (interpose "\t" heads)))
+        (println)))))
+
+(defn initialize-head-words [sentences]
+  "Convert :head into nil in each words in the sentences.
+
+   Ex)
+
+   [{:surface :root, :pos-tag :root, :idx 0, :head -1}
+    {:surface \"ms.\", :pos-tag \"NNP\", :idx 1, :head 2}]
+   =>
+   [{:surface :root, :pos-tag :root, :idx 0, :head nil}
+    {:surface \"ms.\", :pos-tag \"NNP\", :idx 1, :head nil}]"
+  (reduce
+   (fn [result sent]
+     (do
+       (conj result (vec (map #(assoc % :head nil) sent)))))
+   []
+   sentences))
+
+(defn load-models [model-filename]
+  (deserialize model-filename))
