@@ -1,4 +1,4 @@
-(defproject simple-shift-reduce-parsing "0.0.1"
+(defproject simple-shift-reduce-parsing "0.0.2"
   :description "Dependency parser based on shift reduce algorithm"
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.cli "0.2.1"]

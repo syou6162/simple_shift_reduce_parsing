@@ -1,4 +1,5 @@
 (ns simple_shift_reduce_parsing.feature
+  (:use [clj-utils.io :only (serialize deserialize)])
   (:require [simple_shift_reduce_parsing.configuration :as config])
   (:require [simple_shift_reduce_parsing.action :as action])
   (:use clojure.set))
@@ -7,6 +8,22 @@
 
 (defstruct feature :type :str)
 (def feature-names (atom []))
+(declare feature-to-id)
+
+(let [mapping (atom {})]
+  (defn feature-to-id [feature]
+    (let [v (get @mapping feature)
+          max-id (count @mapping)]
+      (if v
+        v
+        (do (swap! mapping assoc feature max-id)
+            max-id))))
+  (defn save-feature-to-id [filename]
+    (serialize @mapping filename))
+  (defn load-feature-to-id [filename]
+    (reset! mapping (deserialize filename)))
+  (defn clear-feature-to-id! []
+    (reset! mapping {})))
 
 (defn get-stack-idx [stack idx]
   (let [n (count stack)]
@@ -132,6 +149,7 @@
                     (flatten)
                     (filter (fn [fv] (not (nil? (:str fv))))))]
     (->> (combinational-features raw-fv)
+         (map feature-to-id)
          (map #(vector % 1))
          (vec))))
 
