@@ -74,7 +74,8 @@
         _ (println "Finished loading models...")
         parsed-sentences (time (doall (map (partial parse models) (initialize-head-words original-sentences))))
         _ (println (str "Finished parsing " (count parsed-sentences) " sentences..."))]
-    (println (get-dependency-accuracy original-sentences parsed-sentences))))
+    (println (get-dependency-accuracy original-sentences parsed-sentences))
+    (println (get-complete-accuracy original-sentences parsed-sentences))))
 
 (defn export-mode [test-filename]
   (let [sentences (read-mst-format-file test-filename)]
