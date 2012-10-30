@@ -19,8 +19,8 @@ for line in f:
     else:
         print wrds; wrds = "";
         print pos; pos = "";
-        print labs; labs = "";
         print par; par = "";
+        print labs; labs = "";
         print "";
 
 f.close();
