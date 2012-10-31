@@ -10,6 +10,9 @@
   (:use [clj-utils.io :only (serialize deserialize)])
   (:gen-class))
 
+(import java.text.SimpleDateFormat)
+(import (org.apache.log4j PatternLayout FileAppender))
+(use 'clojure.tools.logging 'clj-logging-config.log4j)
 (require '[clojure.tools.cli :as cli])
 
 (defn extract-surfaces [sentence]
@@ -37,6 +40,7 @@
 	   ["--training-filename" "File name of training" :default "./data/train.lab"]
            ["--test-filename" "File name of test" :default "./data/test.lab"]
            ["--model-filename" "File name of the (saved|load) model" :default "parsing.model"]
+           ["--logging-level" "level of logging" :default :debug :parse-fn #(keyword %)]
 	   ["--max-iter" "Number of maximum iterations" :default 10 :parse-fn #(Integer. %)]
            ["--eta" "Fobos hyper-parameter for update step" :default 1.0 :parse-fn #(Double. %)]
            ["--lambda" "Fobos hyper-parameter for regularization" :default 0.005 :parse-fn #(Double. %)]
@@ -49,9 +53,9 @@
                              gold))
         _ (save-feature-to-id feature-to-id-filename)
         _ (clear-feature-to-id!)
-        _ (println "Started training...")
+        _ (debug "Started training...")
         models (get-models training-examples max-iter eta lambda)
-        _ (println "Finished training...")]
+        _ (debug "Finished training...")]
     (serialize (reduce (fn [result [class model]]
                          (assoc result class
                                 (assoc model :examples [])))
@@ -69,13 +73,13 @@
 (defn evaluate-sentences [model-filename test-filename feature-to-id-filename]
   (let [_ (load-feature-to-id feature-to-id-filename)
         original-sentences (read-mst-format-file test-filename)
-        _ (println (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
+        _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
         models (load-models model-filename)
-        _ (println "Finished loading models...")
-        parsed-sentences (time (doall (map (partial parse models) (initialize-head-words original-sentences))))
-        _ (println (str "Finished parsing " (count parsed-sentences) " sentences..."))]
-    (println (get-dependency-accuracy original-sentences parsed-sentences))
-    (println (get-complete-accuracy original-sentences parsed-sentences))))
+        _ (debug "Finished loading models...")
+        parsed-sentences (time (doall (pmap (partial parse models) (initialize-head-words original-sentences))))
+        _ (debug (str "Finished parsing " (count parsed-sentences) " sentences..."))]
+    (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
+    (info (str "Complete accuracy: " (get-complete-accuracy original-sentences parsed-sentences)))))
 
 (defn export-mode [test-filename]
   (let [sentences (read-mst-format-file test-filename)]
@@ -83,7 +87,15 @@
                 (map-indexed #(vector %1 %2) sentences)))))
 
 (defn -main [& args]
-  (let [[options args banner] (get-cli-opts args)]
+  (let [[options rest-args banner] (get-cli-opts args)]
+    (set-logger!
+     :level (:logging-level options)
+     :out (org.apache.log4j.FileAppender.
+           (org.apache.log4j.EnhancedPatternLayout.
+            "%d [%t] %p %c %x - %m%n")
+           (str "logs/" (.format (SimpleDateFormat. "yyyy-MM-dd-HH-mm-ss") (java.util.Date.)) ".log")
+           true))
+    (debug (str "Command line args: " (apply str (interpose " " args))))
     (when (:help options)
       (println banner)
       (System/exit 0))
