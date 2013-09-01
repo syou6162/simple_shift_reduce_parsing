@@ -2,9 +2,10 @@
   :description "Dependency parser based on shift reduce algorithm"
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.cli "0.2.1"]
-                 [fobos_multiclass_clj "0.1.4"]
                  [dorothy "0.0.3"]
                  [info.yasuhisay/clj-utils "0.1.0-SNAPSHOT"]
+                 [de.bwaldvogel/liblinear "1.92"]
+                 [info.yasuhisay/liblinear "0.0.1"]
                  [log4j/log4j "1.2.16"
                   :exclusions [javax.mail/mail javax.jms/jms
                                com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]

@@ -4,10 +4,13 @@
         simple_shift_reduce_parsing.parse
         simple_shift_reduce_parsing.evaluation
         simple_shift_reduce_parsing.topological_sort)
-  (:use [fobos-multiclass-clj.util])
-  (:use [fobos-multiclass-clj.multiclass
-         :only (multiclass-examples argmax-label get-models get-label-scores)])
+  (:use [clj-utils.core :only (split-with-ratio)])
   (:use [clj-utils.io :only (serialize deserialize)])
+  (:use [clj-utils.evaluation :only (get-accuracy)])
+  (:import [de.bwaldvogel.liblinear Parameter])
+  (:import [de.bwaldvogel.liblinear SolverType])
+  (:use [liblinear.core
+         :only (make-SVM classify do-cross-validation save-model load-model)])
   (:gen-class))
 
 (import java.text.SimpleDateFormat)
@@ -37,31 +40,45 @@
   (cli/cli args
            ["-h" "--help" "Show help" :default false :flag true]
            ["--mode" "(train|test|eval|export)"]
+           ["--k" "Number of cross-validations" :default 5 :parse-fn #(Integer. %)]
 	   ["--training-filename" "File name of training" :default "./data/train.lab"]
            ["--test-filename" "File name of test" :default "./data/test.lab"]
            ["--model-filename" "File name of the (saved|load) model" :default "parsing.model"]
            ["--logging-level" "level of logging" :default :debug :parse-fn #(keyword %)]
-	   ["--max-iter" "Number of maximum iterations" :default 10 :parse-fn #(Integer. %)]
-           ["--eta" "Fobos hyper-parameter for update step" :default 1.0 :parse-fn #(Double. %)]
-           ["--lambda" "Fobos hyper-parameter for regularization" :default 0.005 :parse-fn #(Double. %)]
            ["--feature-to-id-filename" "File name of the feature2id mapping" :default "feature-to-id.bin"]))
 
-(defn train-models [filename max-iter eta lambda model-filename feature-to-id-filename]
-  (let [training-examples (multiclass-examples
-                           (for [sentence (read-mst-format-file filename)
-                                 gold (generate-gold sentence)]
-                             gold))
-        _ (save-feature-to-id feature-to-id-filename)
-        _ (clear-feature-to-id!)
-        _ (debug "Started training...")
-        models (get-models training-examples max-iter eta lambda)
-        _ (debug "Finished training...")]
-    (serialize (reduce (fn [result [class model]]
-                         (assoc result class
-                                (assoc model :examples [])))
-                       {}
-                       models)
-               model-filename)))
+(defn train-model [{training-filename :training-filename
+                    model-filename :model-filename
+                    feature-to-id-filename :feature-to-id-filename
+                    k :k}]
+  (let [sentences (->> training-filename
+                       (read-mst-format-file)
+                       (take 1000))
+        training-examples (for [sentence sentences
+                                gold (generate-gold sentence)]
+                            gold)
+        gold-labels (mapv first training-examples)
+        params (for [x [10 1 0.1 0.01 0.001], y [7.5 5 2.5 1]]
+                 (new Parameter SolverType/L2R_LR_DUAL (* x y) 0.1))
+        pairs (->> params
+                   (pmap
+                    (fn [param]
+                      (let [target (->> (do-cross-validation
+                                         param training-examples k)
+                                        (mapv int))]
+                        [param (get-accuracy gold-labels target)])))
+                   (vec))
+        best-param (->> pairs
+                        (sort-by second >)
+                        (first)
+                        (first))]
+    (save-feature-to-id feature-to-id-filename)
+    (clear-feature-to-id!)
+    (doseq [[p acc] pairs]
+      (info (str (. p getC) ": " acc)))
+    (info (str "Best param is C = " (. best-param getC)))
+    (-> (make-SVM best-param training-examples)
+        (save-model model-filename))))
 
 (defn test-mode [model-filename test-filename feature-to-id-filename]
   (let [_ (load-feature-to-id feature-to-id-filename)
@@ -71,13 +88,18 @@
     (print-mst-format-file parsed-sentences)))
 
 (defn evaluate-sentences [model-filename test-filename feature-to-id-filename]
-  (let [_ (load-feature-to-id feature-to-id-filename)
-        original-sentences (read-mst-format-file test-filename)
+  (load-feature-to-id feature-to-id-filename)
+  (let [original-sentences (take-last 1000 (read-mst-format-file test-filename))
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
-        models (load-models model-filename)
-        _ (debug "Finished loading models...")
-        parsed-sentences (time (doall (pmap (partial parse models) (initialize-head-words original-sentences))))
-        _ (debug (str "Finished parsing " (count parsed-sentences) " sentences..."))]
+        models (load-model model-filename)
+        parsed-sentences (->> (initialize-head-words original-sentences)
+                              (pmap (partial parse models))
+                              (doall))]
+    (debug "Finished loading models...")
+    (debug (str "training-filename: " (:training-filename (meta models))))
+    (debug (str "Number of training sentences: " (:num-of-training-sentences (meta models))))
+    (debug (str "Started parsing " (count original-sentences) " sentences..."))
+    (debug (str "Finished parsing " (count parsed-sentences) " sentences..."))
     (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
     (info (str "Complete accuracy: " (get-complete-accuracy original-sentences parsed-sentences)))))
 
@@ -96,13 +118,12 @@
            (str "logs/" (.format (SimpleDateFormat. "yyyy-MM-dd-HH-mm-ss") (java.util.Date.)) ".log")
            true))
     (debug (str "Command line args: " (apply str (interpose " " args))))
+    (debug (str "Options: " options))
+    (debug (str "Rest args: " rest-args))
     (when (:help options)
       (println banner)
       (System/exit 0))
-    (cond (= "train" (:mode options)) (train-models (:training-filename options) (:max-iter options)
-                                                    (:eta options) (:lambda options)
-                                                    (:model-filename options)
-                                                    (:feature-to-id-filename options))
+    (cond (= "train" (:mode options)) (train-model options)
           (= "test" (:mode options)) (test-mode (:model-filename options)
                                                 (:test-filename options)
                                                 (:feature-to-id-filename options))
