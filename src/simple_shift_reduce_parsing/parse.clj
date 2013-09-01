@@ -2,7 +2,7 @@
   (:use [simple_shift_reduce_parsing.feature])
   (:require [simple_shift_reduce_parsing.configuration :as config])
   (:require [simple_shift_reduce_parsing.action :as action])
-  (:use [fobos-multiclass-clj.multiclass :only (argmax-label)]))
+  (:use [liblinear.core :only (classify)]))
 
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
@@ -14,5 +14,5 @@
                   (assoc-in sent [(:idx modifier) :head] (:idx head)))
                 sentence
                 pairs))
-      (let [action (argmax-label models (get-fv config))]
-        (recur ((action/action-mapping action) config))))))
+      (let [action-id (classify models (get-fv config))]
+        (recur ((action/id2action action-id) config))))))

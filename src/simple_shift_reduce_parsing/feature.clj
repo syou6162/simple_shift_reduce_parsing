@@ -166,4 +166,5 @@
           (recur
            next-config
            (inc actions-idx)
-           (conj result [current-action (get-fv config)])))))))
+           (conj result [(action/action2id current-action)
+                         (get-fv config)])))))))
