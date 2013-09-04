@@ -77,14 +77,18 @@
     (-> (make-SVM best-param training-examples)
         (save-model model-filename))))
 
-(defn test-mode [model-filename test-filename feature-to-id-filename]
-  (let [_ (load-feature-to-id feature-to-id-filename)
-        original-sentences (read-mst-format-file test-filename)
+(defn test-mode [{model-filename :model-filename
+                  test-filename :test-filename
+                  feature-to-id-filename :feature-to-id-filename}]
+  (load-feature-to-id feature-to-id-filename)
+  (let [original-sentences (read-mst-format-file test-filename)
         models (load-models model-filename)
         parsed-sentences (map (partial parse models) (initialize-head-words original-sentences))]
     (print-mst-format-file parsed-sentences)))
 
-(defn evaluate-sentences [model-filename test-filename feature-to-id-filename]
+(defn evaluate-sentences [{model-filename :model-filename
+                           test-filename :test-filename
+                           feature-to-id-filename :feature-to-id-filename}]
   (load-feature-to-id feature-to-id-filename)
   (let [original-sentences (read-mst-format-file test-filename)
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
@@ -121,12 +125,8 @@
       (println banner)
       (System/exit 0))
     (cond (= "train" (:mode options)) (train-model options)
-          (= "test" (:mode options)) (test-mode (:model-filename options)
-                                                (:test-filename options)
-                                                (:feature-to-id-filename options))
-          (= "eval" (:mode options)) (evaluate-sentences (:model-filename options)
-                                                         (:test-filename options)
-                                                         (:feature-to-id-filename options))
+          (= "test" (:mode options)) (test-mode options)
+          (= "eval" (:mode options)) (evaluate-sentences options)
           (= "export" (:mode options)) (export-mode (:test-filename options))
           :else nil)
     (shutdown-agents)))
