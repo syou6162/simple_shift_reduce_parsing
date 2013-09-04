@@ -26,29 +26,12 @@
   (let [n (count stack)]
     (- n (- idx))))
 
-(defn feature-bigram [f1 f2]
-  (let [type1 (:type f1)
-        str1 (:str f1)
-        type2 (:type f2)
-        str2 (:str f2)]
-    (struct feature
-            (symbol (str type1 "-and-" type2))
-            (str str1 "-and-" str2))))
-
-(defn combinational-features [raw-fv]
-  (let [n (count raw-fv)
-        fv-bigram (for [i (range n)
-                        j (range n)
-                        :when (< i j)]
-                    (feature-bigram (nth raw-fv i) (nth raw-fv j)))]
-    (vec (concat raw-fv fv-bigram))))
-
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
                     (flatten)
                     (filter (fn [fv] (not (nil? (:str fv))))))]
-    (->> (combinational-features raw-fv)
+    (->> raw-fv
          (map feature-to-id)
          (map #(vector % 1))
          (vec))))
