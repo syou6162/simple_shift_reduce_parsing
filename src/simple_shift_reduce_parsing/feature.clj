@@ -190,6 +190,8 @@
    #'leftmost-dependent-of-input-word-feature
    #'leftmost-dependent-of-input-pos-feature])
 
+(def third-order-features [])
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
