@@ -6,8 +6,6 @@
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
 (defstruct feature :type :str)
-(def feature-names (atom []))
-(declare feature-to-id)
 
 (let [mapping (atom {})]
   (defn feature-to-id [feature]
