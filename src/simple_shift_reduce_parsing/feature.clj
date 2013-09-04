@@ -104,6 +104,50 @@
        (defn ~pos-feature-name [config#]
          (-> config# ~feature-name :pos-tag)))))
 
+(defn head-of-stack [{stack :stack, relations :relations}]
+  (let [t (peek stack) ; top of the stack
+        th (get-in relations [:modifier-to-head t])] ; head of t
+    th))
+
+(defn leftmost-dependent-of-stack [{stack :stack, relations :relations}]
+  (let [t (peek stack) ; top of the stack
+        tl (first (get-in relations [:head-to-modifiers t]))]
+    tl))
+
+(defn rightmost-dependent-of-stack [{stack :stack, relations :relations}]
+  (let [t (peek stack) ; top of the stack
+        tr (peek (get-in relations [:head-to-modifiers t]))]
+    tr))
+
+(defn leftmost-dependent-of-input [{input :input, relations :relations}]
+  (let [n (first input) ; next input token
+        nl (first (get (:head-to-modifiers relations) n))] ; leftmost dependent of n
+    nl))
+
+(def-both-word-and-pos-feature head-of-stack)
+(def-both-word-and-pos-feature leftmost-dependent-of-stack)
+(def-both-word-and-pos-feature rightmost-dependent-of-stack)
+(def-both-word-and-pos-feature leftmost-dependent-of-input)
+
+(def three-words-features
+  [(def-conjunctive-feature-fn
+     zero-plus-pos-feature one-plus-pos-feature two-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-pos-feature zero-plus-pos-feature one-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     head-of-stack-pos-feature zero-plus-pos-feature zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-pos-feature leftmost-dependent-of-stack-pos-feature zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-pos-feature rightmost-dependent-of-stack-pos-feature zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-pos-feature zero-plus-pos-feature leftmost-dependent-of-input-pos-feature)])
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
