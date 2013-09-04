@@ -178,6 +178,8 @@
    (def-conjunctive-feature-fn
      zero-minus-pos-feature zero-plus-pos-feature distance-feature)])
 
+(def valency-features [])
+
 (def unigram-features
   [#'head-of-stack-pos-feature
    #'head-of-stack-word-feature
