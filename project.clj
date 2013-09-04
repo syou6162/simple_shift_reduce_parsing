@@ -17,4 +17,5 @@
              "-XX:+CMSParallelRemarkEnabled"
              "-XX:+UseParNewGC"
              "-Dfile.encoding=UTF-8"]
+  :global-vars {*warn-on-reflection* true}
   :main simple_shift_reduce_parsing.core)
