@@ -62,8 +62,10 @@
                     (fn [param]
                       (let [target (->> (do-cross-validation
                                          param training-examples k)
-                                        (mapv int))]
-                        [param (get-accuracy gold-labels target)])))
+                                        (mapv int))
+                            accuracy (get-accuracy gold-labels target)]
+                        (info (str (. param getC) ": " accuracy))
+                        [param accuracy])))
                    (vec))
         best-param (->> pairs
                         (sort-by second >)
@@ -71,8 +73,6 @@
                         (first))]
     (save-feature-to-id feature-to-id-filename)
     (clear-feature-to-id!)
-    (doseq [[p acc] pairs]
-      (info (str (. p getC) ": " acc)))
     (info (str "Best param is C = " (. best-param getC)))
     (-> (make-SVM best-param training-examples)
         (save-model model-filename))))
