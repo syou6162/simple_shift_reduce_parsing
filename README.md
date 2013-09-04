@@ -37,6 +37,6 @@ Nivre (2004)のarc-eagerなshift-reduce parserです。liblinearを利用して�
 
 ## License
 
-Copyright (C) 2012 Yasuhisa Yoshida
+Copyright (C) 2013 Yasuhisa Yoshida
 
 Distributed under the Eclipse Public License, the same as Clojure.
