@@ -2,10 +2,7 @@
   (:use simple_shift_reduce_parsing.util
         simple_shift_reduce_parsing.feature
         simple_shift_reduce_parsing.parse
-        simple_shift_reduce_parsing.evaluation
-        simple_shift_reduce_parsing.topological_sort)
-  (:use [clj-utils.core :only (split-with-ratio)])
-  (:use [clj-utils.io :only (serialize deserialize)])
+        simple_shift_reduce_parsing.evaluation)
   (:use [clj-utils.evaluation :only (get-accuracy)])
   (:import [de.bwaldvogel.liblinear Parameter])
   (:import [de.bwaldvogel.liblinear SolverType])
@@ -41,8 +38,8 @@
            ["-h" "--help" "Show help" :default false :flag true]
            ["--mode" "(train|test|eval|export)"]
            ["--k" "Number of cross-validations" :default 5 :parse-fn #(Integer. %)]
-	   ["--training-filename" "File name of training" :default "./data/train.lab"]
-           ["--test-filename" "File name of test" :default "./data/test.lab"]
+	   ["--training-filename" "File name of training" :default "train.txt"]
+           ["--test-filename" "File name of test" :default "test.txt"]
            ["--model-filename" "File name of the (saved|load) model" :default "parsing.model"]
            ["--logging-level" "level of logging" :default :debug :parse-fn #(keyword %)]
            ["--feature-to-id-filename" "File name of the feature2id mapping" :default "feature-to-id.bin"]))
@@ -52,8 +49,7 @@
                     feature-to-id-filename :feature-to-id-filename
                     k :k}]
   (let [sentences (->> training-filename
-                       (read-mst-format-file)
-                       (take 1000))
+                       (read-mst-format-file))
         training-examples (for [sentence sentences
                                 gold (generate-gold sentence)]
                             gold)
@@ -65,8 +61,10 @@
                     (fn [param]
                       (let [target (->> (do-cross-validation
                                          param training-examples k)
-                                        (mapv int))]
-                        [param (get-accuracy gold-labels target)])))
+                                        (mapv int))
+                            accuracy (get-accuracy gold-labels target)]
+                        (info (str (. param getC) ": " accuracy))
+                        [param accuracy])))
                    (vec))
         best-param (->> pairs
                         (sort-by second >)
@@ -74,22 +72,24 @@
                         (first))]
     (save-feature-to-id feature-to-id-filename)
     (clear-feature-to-id!)
-    (doseq [[p acc] pairs]
-      (info (str (. p getC) ": " acc)))
     (info (str "Best param is C = " (. best-param getC)))
     (-> (make-SVM best-param training-examples)
         (save-model model-filename))))
 
-(defn test-mode [model-filename test-filename feature-to-id-filename]
-  (let [_ (load-feature-to-id feature-to-id-filename)
-        original-sentences (read-mst-format-file test-filename)
+(defn test-mode [{model-filename :model-filename
+                  test-filename :test-filename
+                  feature-to-id-filename :feature-to-id-filename}]
+  (load-feature-to-id feature-to-id-filename)
+  (let [original-sentences (read-mst-format-file test-filename)
         models (load-models model-filename)
         parsed-sentences (map (partial parse models) (initialize-head-words original-sentences))]
     (print-mst-format-file parsed-sentences)))
 
-(defn evaluate-sentences [model-filename test-filename feature-to-id-filename]
+(defn evaluate-sentences [{model-filename :model-filename
+                           test-filename :test-filename
+                           feature-to-id-filename :feature-to-id-filename}]
   (load-feature-to-id feature-to-id-filename)
-  (let [original-sentences (take-last 1000 (read-mst-format-file test-filename))
+  (let [original-sentences (read-mst-format-file test-filename)
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
         models (load-model model-filename)
         parsed-sentences (->> (initialize-head-words original-sentences)
@@ -124,12 +124,8 @@
       (println banner)
       (System/exit 0))
     (cond (= "train" (:mode options)) (train-model options)
-          (= "test" (:mode options)) (test-mode (:model-filename options)
-                                                (:test-filename options)
-                                                (:feature-to-id-filename options))
-          (= "eval" (:mode options)) (evaluate-sentences (:model-filename options)
-                                                         (:test-filename options)
-                                                         (:feature-to-id-filename options))
+          (= "test" (:mode options)) (test-mode options)
+          (= "eval" (:mode options)) (evaluate-sentences options)
           (= "export" (:mode options)) (export-mode (:test-filename options))
           :else nil)
     (shutdown-agents)))

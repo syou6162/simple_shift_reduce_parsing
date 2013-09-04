@@ -9,19 +9,17 @@ Shift-reduce parser based on Nivre (2004).
 % lein run -m simple_shift_reduce_parsing.core --help
 
 # training the model from annotated sentences
-% lein run --mode train --training-filename data/train.lab --max-iter 10 --lambda 0.005
+% lein run --mode train --training-filename train.txt --k 10
 
 # parse test sentences
-% lein run --mode test --test-filename data/test.lab
+% lein run --mode test --test-filename test.txt
 
 # evaluate the system performance
-% lein run --mode eval --test-filename data/test.lab
+% lein run --mode eval --test-filename test.txt
 ```
 
 ## About this model
-Nivre (2004)のarc-eagerなshift-reduce parserです。actionの選択にはFOBOSによるSVM([syou6162/fobos_clj](https://github.com/syou6162/fobos_clj)、[syou6162/fobos_multiclass_clj](https://github.com/syou6162/fobos_multiclass_clj))を利用しています(one versus restで4値分類)。L1正則化がかかっているので、割とコンパクトでそこそこの性能が出るモデルができあがるはずです。
-
-素性には(ありがちな)スタックとキューの単語の表層や品詞、親子関係や以前のactionなどを入れています。詳しくは[feature.clj](https://github.com/syou6162/simple_shift_reduce_parsing/blob/master/src/simple_shift_reduce_parsing/feature.clj)を見てください。FOBOSにはカーネルを利用することができないので、組み合わせ素性を陽に入れています(そこの生成でdecode時のスピードが少し犠牲になっている)。
+Nivre (2004)のarc-eagerなshift-reduce parserです。liblinearを利用しています。素性にはZhang and Nivre (ACL2011)の素性を入れています。
 
 ## File format conversion
 
@@ -39,6 +37,6 @@ Nivre (2004)のarc-eagerなshift-reduce parserです。actionの選択にはFOBO
 
 ## License
 
-Copyright (C) 2012 Yasuhisa Yoshida
+Copyright (C) 2013 Yasuhisa Yoshida
 
 Distributed under the Eclipse Public License, the same as Clojure.
