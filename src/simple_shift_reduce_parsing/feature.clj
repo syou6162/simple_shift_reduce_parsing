@@ -148,6 +148,36 @@
    (def-conjunctive-feature-fn
      zero-plus-pos-feature zero-plus-pos-feature leftmost-dependent-of-input-pos-feature)])
 
+(defn distance-feature [{stack :stack, input :input}]
+  (let [i (:idx (peek stack))
+        j (:idx (first input))
+        dist (if (and i j)
+               (let [d (Math/abs (- i j))]
+                 (cond (> d 10) 11
+                       (> d 5) 6
+                       :else d))
+               -1)]
+    dist))
+
+(def distance-features
+  [(def-conjunctive-feature-fn
+     zero-minus-word-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-pos-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-word-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-pos-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-word-feature zero-plus-word-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-pos-feature zero-plus-pos-feature distance-feature)])
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
