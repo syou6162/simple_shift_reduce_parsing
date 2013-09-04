@@ -2,10 +2,7 @@
   (:use simple_shift_reduce_parsing.util
         simple_shift_reduce_parsing.feature
         simple_shift_reduce_parsing.parse
-        simple_shift_reduce_parsing.evaluation
-        simple_shift_reduce_parsing.topological_sort)
-  (:use [clj-utils.core :only (split-with-ratio)])
-  (:use [clj-utils.io :only (serialize deserialize)])
+        simple_shift_reduce_parsing.evaluation)
   (:use [clj-utils.evaluation :only (get-accuracy)])
   (:import [de.bwaldvogel.liblinear Parameter])
   (:import [de.bwaldvogel.liblinear SolverType])
