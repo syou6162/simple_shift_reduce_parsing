@@ -3,6 +3,10 @@
   (:require [simple_shift_reduce_parsing.configuration :as config])
   (:require [simple_shift_reduce_parsing.action :as action]))
 
+;; 素性は以下の論文のBaseline feature templatesを参考に作成
+;; labelに関する素性は未実装
+;; http://www.sutd.edu.sg/cmsresource/faculty/yuezhang/acl11j.pdf
+
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
 (defstruct feature :type :str)
