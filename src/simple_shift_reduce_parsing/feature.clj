@@ -62,6 +62,39 @@
    (def-around-feature-fn two-plus-pos-feature 2 :pos-tag)
    (def-conjunctive-feature-fn two-plus-word-feature two-plus-pos-feature)])
 
+(def two-words-features
+  [(def-conjunctive-feature-fn
+     zero-minus-word-feature zero-minus-pos-feature
+     zero-plus-word-feature zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-word-feature zero-minus-pos-feature
+     zero-plus-word-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-word-feature
+     zero-plus-word-feature zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-word-feature zero-minus-pos-feature
+     zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-pos-feature
+     zero-plus-word-feature zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-word-feature
+     zero-plus-word-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-pos-feature
+     zero-plus-pos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-pos-feature
+     one-plus-pos-feature)])
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
