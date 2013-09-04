@@ -192,12 +192,20 @@
 
 (def third-order-features [])
 
+(def ^:dynamic *all-features*
+  (->> [single-word-features two-words-features three-words-features
+        distance-features valency-features unigram-features third-order-features]
+       (reduce into [])))
+
 (defn get-fv [configuration]
-  (let [raw-fv (->> (seq @feature-names)
-                    (map (fn [feature-fn] (feature-fn configuration)))
-                    (flatten)
+  (let [raw-fv (->> *all-features*
+                    (map (fn [feature-fn]
+                           (struct feature
+                                   (-> feature-fn meta :name)
+                                   (feature-fn configuration))))
                     (filter (fn [fv] (not (nil? (:str fv))))))]
     (->> raw-fv
+         (map (fn [f] (str (:type f) "-and-" (:str f))))
          (map feature-to-id)
          (map #(vector % 1))
          (vec))))
