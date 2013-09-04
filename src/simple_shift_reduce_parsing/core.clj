@@ -86,7 +86,7 @@
 
 (defn evaluate-sentences [model-filename test-filename feature-to-id-filename]
   (load-feature-to-id feature-to-id-filename)
-  (let [original-sentences (take-last 1000 (read-mst-format-file test-filename))
+  (let [original-sentences (read-mst-format-file test-filename)
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
         models (load-model model-filename)
         parsed-sentences (->> (initialize-head-words original-sentences)
