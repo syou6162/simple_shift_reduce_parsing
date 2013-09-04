@@ -49,8 +49,7 @@
                     feature-to-id-filename :feature-to-id-filename
                     k :k}]
   (let [sentences (->> training-filename
-                       (read-mst-format-file)
-                       (take 1000))
+                       (read-mst-format-file))
         training-examples (for [sentence sentences
                                 gold (generate-gold sentence)]
                             gold)
