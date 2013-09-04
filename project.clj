@@ -12,5 +12,9 @@
                  [org.slf4j/slf4j-log4j12 "1.6.4"]
                  [org.clojure/tools.logging "0.2.3"]
                  [clj-logging-config "1.9.7"]]
-  :jvm-opts ["-Xmx8g" "-server" "-Dfile.encoding=UTF-8"]
+  :jvm-opts ["-Xms100G" "-Xmx100G" "-server"
+             "-XX:+UseConcMarkSweepGC"
+             "-XX:+CMSParallelRemarkEnabled"
+             "-XX:+UseParNewGC"
+             "-Dfile.encoding=UTF-8"]
   :main simple_shift_reduce_parsing.core)
