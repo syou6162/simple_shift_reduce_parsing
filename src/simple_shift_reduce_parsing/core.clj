@@ -38,8 +38,8 @@
            ["-h" "--help" "Show help" :default false :flag true]
            ["--mode" "(train|test|eval|export)"]
            ["--k" "Number of cross-validations" :default 5 :parse-fn #(Integer. %)]
-	   ["--training-filename" "File name of training" :default "./data/train.lab"]
-           ["--test-filename" "File name of test" :default "./data/test.lab"]
+	   ["--training-filename" "File name of training" :default "train.txt"]
+           ["--test-filename" "File name of test" :default "test.txt"]
            ["--model-filename" "File name of the (saved|load) model" :default "parsing.model"]
            ["--logging-level" "level of logging" :default :debug :parse-fn #(keyword %)]
            ["--feature-to-id-filename" "File name of the feature2id mapping" :default "feature-to-id.bin"]))
