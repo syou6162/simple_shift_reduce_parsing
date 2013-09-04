@@ -9,13 +9,13 @@ Shift-reduce parser based on Nivre (2004).
 % lein run -m simple_shift_reduce_parsing.core --help
 
 # training the model from annotated sentences
-% lein run --mode train --training-filename data/train.lab --max-iter 10 --lambda 0.005
+% lein run --mode train --training-filename train.txt --k 10
 
 # parse test sentences
-% lein run --mode test --test-filename data/test.lab
+% lein run --mode test --test-filename test.txt
 
 # evaluate the system performance
-% lein run --mode eval --test-filename data/test.lab
+% lein run --mode eval --test-filename test.txt
 ```
 
 ## About this model
