@@ -37,6 +37,14 @@
          (get-in stack# [(get-stack-idx stack# ~idx) ~type]))
        (get-in configuration# [:input ~idx ~type]))))
 
+(defmacro def-conjunctive-feature-fn [& fs-list]
+  (let [fs (vec fs-list)
+        feature-name (symbol (clojure.string/join "-and-" fs))]
+    `(defn ~feature-name [configuration#]
+       (let [tmp# (map (fn [f#] (f# configuration#)) ~fs)]
+         (if (every? #(not (nil? %)) tmp#)
+           (clojure.string/join \& tmp#))))))
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
