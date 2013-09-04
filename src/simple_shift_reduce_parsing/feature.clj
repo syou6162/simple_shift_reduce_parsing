@@ -30,6 +30,13 @@
   (let [n (count stack)]
     (- n (- idx))))
 
+(defmacro def-around-feature-fn [feature-name idx type]
+  `(defn ~feature-name [configuration#]
+     (if (neg? ~idx)
+       (let [stack# (get configuration# :stack)]
+         (get-in stack# [(get-stack-idx stack# ~idx) ~type]))
+       (get-in configuration# [:input ~idx ~type]))))
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
