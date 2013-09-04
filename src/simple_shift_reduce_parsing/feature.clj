@@ -1,8 +1,7 @@
 (ns simple_shift_reduce_parsing.feature
   (:use [clj-utils.io :only (serialize deserialize)])
   (:require [simple_shift_reduce_parsing.configuration :as config])
-  (:require [simple_shift_reduce_parsing.action :as action])
-  (:use clojure.set))
+  (:require [simple_shift_reduce_parsing.action :as action]))
 
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
