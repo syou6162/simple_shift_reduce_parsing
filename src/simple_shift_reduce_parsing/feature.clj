@@ -26,9 +26,6 @@
   (let [n (count stack)]
     (- n (- idx))))
 
-(defmacro def-feature-fn [feature-name args & body]
-  `(let [name# (defn ~feature-name ~args ~@body)]
-     (swap! feature-names conj name#)))
 
 (defmacro def-around-feature-fn [feature-name idx type]
   `(def-feature-fn ~feature-name [configuration#]
