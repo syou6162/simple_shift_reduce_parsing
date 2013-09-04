@@ -45,6 +45,23 @@
          (if (every? #(not (nil? %)) tmp#)
            (clojure.string/join \& tmp#))))))
 
+(def single-word-features
+  [(def-around-feature-fn zero-minus-word-feature -1 :surface)
+   (def-around-feature-fn zero-minus-pos-feature -1 :pos-tag)
+   (def-conjunctive-feature-fn zero-minus-word-feature zero-minus-pos-feature)
+
+   (def-around-feature-fn zero-plus-word-feature 0 :surface)
+   (def-around-feature-fn zero-plus-pos-feature 0 :pos-tag)
+   (def-conjunctive-feature-fn zero-plus-word-feature zero-plus-pos-feature)
+
+   (def-around-feature-fn one-plus-word-feature 1 :surface)
+   (def-around-feature-fn one-plus-pos-feature 1 :pos-tag)
+   (def-conjunctive-feature-fn one-plus-word-feature one-plus-pos-feature)
+
+   (def-around-feature-fn two-plus-word-feature 2 :surface)
+   (def-around-feature-fn two-plus-pos-feature 2 :pos-tag)
+   (def-conjunctive-feature-fn two-plus-word-feature two-plus-pos-feature)])
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
