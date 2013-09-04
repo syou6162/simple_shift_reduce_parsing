@@ -86,6 +86,9 @@
                      :reduce reduce
 		     :shift shift})
 
+(def action2id {:left 0, :right 1, :reduce 2, :shift 3})
+(def id2action [left right reduce shift])
+
 ; reference http://tinyurl.com/97jx424
 
 ;; # This function implements the rules described in section 4.1.
