@@ -95,6 +95,15 @@
      zero-plus-pos-feature
      one-plus-pos-feature)])
 
+(defmacro def-both-word-and-pos-feature [feature-name]
+  (let [word-feature-name (symbol (str feature-name "-word-feature"))
+        pos-feature-name (symbol (str feature-name "-pos-feature"))]
+    `(do
+       (defn ~word-feature-name [config#]
+         (-> config# ~feature-name :surface))
+       (defn ~pos-feature-name [config#]
+         (-> config# ~feature-name :pos-tag)))))
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
