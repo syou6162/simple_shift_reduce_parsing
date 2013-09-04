@@ -178,6 +178,16 @@
    (def-conjunctive-feature-fn
      zero-minus-pos-feature zero-plus-pos-feature distance-feature)])
 
+(def unigram-features
+  [#'head-of-stack-pos-feature
+   #'head-of-stack-word-feature
+   #'leftmost-dependent-of-stack-word-feature
+   #'leftmost-dependent-of-stack-pos-feature
+   #'rightmost-dependent-of-stack-word-feature
+   #'rightmost-dependent-of-stack-pos-feature
+   #'leftmost-dependent-of-input-word-feature
+   #'leftmost-dependent-of-input-pos-feature])
+
 (defn get-fv [configuration]
   (let [raw-fv (->> (seq @feature-names)
                     (map (fn [feature-fn] (feature-fn configuration)))
