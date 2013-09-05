@@ -3,6 +3,7 @@
         simple_shift_reduce_parsing.feature
         simple_shift_reduce_parsing.parse
         simple_shift_reduce_parsing.evaluation)
+  (:use [clj-utils.random :only (shuffle-with-random)])
   (:use [clj-utils.evaluation :only (get-accuracy)])
   (:import [de.bwaldvogel.liblinear Parameter])
   (:import [de.bwaldvogel.liblinear SolverType])
@@ -49,7 +50,8 @@
                     feature-to-id-filename :feature-to-id-filename
                     k :k}]
   (let [sentences (->> training-filename
-                       (read-mst-format-file))
+                       (read-mst-format-file)
+                       (shuffle-with-random))
         training-examples (for [sentence sentences
                                 gold (generate-gold sentence)]
                             gold)
