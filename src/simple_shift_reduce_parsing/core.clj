@@ -73,6 +73,8 @@
                         (sort-by second >)
                         (first)
                         (first))]
+    (info (str "Number of training sentences: " (count sentences)))
+    (info (str "Number of training examples: " (count training-examples)))
     (save-feature-to-id feature-to-id-filename)
     (clear-feature-to-id!)
     (info (str "Best param is C = " (. best-param getC)))
@@ -99,8 +101,6 @@
                               (pmap (partial parse models))
                               (doall))]
     (debug "Finished loading models...")
-    (debug (str "training-filename: " (:training-filename (meta models))))
-    (debug (str "Number of training sentences: " (:num-of-training-sentences (meta models))))
     (debug (str "Started parsing " (count original-sentences) " sentences..."))
     (debug (str "Finished parsing " (count parsed-sentences) " sentences..."))
     (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
@@ -116,13 +116,13 @@
     (set-logger!
      :level (:logging-level options)
      :out (org.apache.log4j.FileAppender.
-           (org.apache.log4j.EnhancedPatternLayout.
-            "%d [%t] %p %c %x - %m%n")
+           (org.apache.log4j.EnhancedPatternLayout. "%d [%p] %c %m%n")
            (str "logs/" (.format (SimpleDateFormat. "yyyy-MM-dd-HH-mm-ss") (java.util.Date.)) ".log")
            true))
     (debug (str "Command line args: " (apply str (interpose " " args))))
     (debug (str "Options: " options))
     (debug (str "Rest args: " rest-args))
+    (debug (str "Host: " (.getHostName (java.net.InetAddress/getLocalHost))))
     (when (:help options)
       (println banner)
       (System/exit 0))
