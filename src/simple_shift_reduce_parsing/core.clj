@@ -59,6 +59,7 @@
         params (for [x [10 1 0.1 0.01 0.001], y [7.5 5 2.5 1]]
                  (new Parameter SolverType/L2R_LR_DUAL (* x y) 0.1))
         pairs (->> params
+                   (shuffle-with-random)
                    (pmap
                     (fn [param]
                       (let [target (->> (do-cross-validation
