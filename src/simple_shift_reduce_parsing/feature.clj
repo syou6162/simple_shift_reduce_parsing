@@ -47,22 +47,42 @@
 
 (def single-word-features
   [(def-around-feature-fn zero-minus-word-feature -1 :surface)
+   (def-around-feature-fn zero-minus-lemma-feature -1 :lemma)
    (def-around-feature-fn zero-minus-pos-feature -1 :pos-tag)
+   (def-around-feature-fn zero-minus-cpos-feature -1 :cpos-tag)
    (def-conjunctive-feature-fn zero-minus-word-feature zero-minus-pos-feature)
+   (def-conjunctive-feature-fn zero-minus-word-feature zero-minus-cpos-feature)
+   (def-conjunctive-feature-fn zero-minus-lemma-feature zero-minus-pos-feature)
+   (def-conjunctive-feature-fn zero-minus-lemma-feature zero-minus-cpos-feature)
 
    (def-around-feature-fn zero-plus-word-feature 0 :surface)
+   (def-around-feature-fn zero-plus-lemma-feature 0 :lemma)
    (def-around-feature-fn zero-plus-pos-feature 0 :pos-tag)
+   (def-around-feature-fn zero-plus-cpos-feature 0 :cpos-tag)
    (def-conjunctive-feature-fn zero-plus-word-feature zero-plus-pos-feature)
+   (def-conjunctive-feature-fn zero-plus-word-feature zero-plus-cpos-feature)
+   (def-conjunctive-feature-fn zero-plus-lemma-feature zero-plus-pos-feature)
+   (def-conjunctive-feature-fn zero-plus-lemma-feature zero-plus-cpos-feature)
 
    (def-around-feature-fn one-plus-word-feature 1 :surface)
+   (def-around-feature-fn one-plus-lemma-feature 1 :lemma)
    (def-around-feature-fn one-plus-pos-feature 1 :pos-tag)
+   (def-around-feature-fn one-plus-cpos-feature 1 :cpos-tag)
    (def-conjunctive-feature-fn one-plus-word-feature one-plus-pos-feature)
+   (def-conjunctive-feature-fn one-plus-word-feature one-plus-cpos-feature)
+   (def-conjunctive-feature-fn one-plus-lemma-feature one-plus-pos-feature)
+   (def-conjunctive-feature-fn one-plus-lemma-feature one-plus-cpos-feature)
 
    (def-around-feature-fn two-plus-word-feature 2 :surface)
+   (def-around-feature-fn two-plus-lemma-feature 2 :lemma)
    (def-around-feature-fn two-plus-pos-feature 2 :pos-tag)
-   (def-conjunctive-feature-fn two-plus-word-feature two-plus-pos-feature)])
+   (def-around-feature-fn two-plus-cpos-feature 2 :cpos-tag)
+   (def-conjunctive-feature-fn two-plus-word-feature two-plus-pos-feature)
+   (def-conjunctive-feature-fn two-plus-word-feature two-plus-cpos-feature)
+   (def-conjunctive-feature-fn two-plus-lemma-feature two-plus-pos-feature)
+   (def-conjunctive-feature-fn two-plus-lemma-feature two-plus-cpos-feature)])
 
-(def two-words-features
+(def two-words-fine-features
   [(def-conjunctive-feature-fn
      zero-minus-word-feature zero-minus-pos-feature
      zero-plus-word-feature zero-plus-pos-feature)
@@ -95,14 +115,56 @@
      zero-plus-pos-feature
      one-plus-pos-feature)])
 
+(def two-words-coarse-features
+  [(def-conjunctive-feature-fn
+     zero-minus-lemma-feature zero-minus-cpos-feature
+     zero-plus-lemma-feature zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-lemma-feature zero-minus-cpos-feature
+     zero-plus-lemma-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-lemma-feature
+     zero-plus-lemma-feature zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-lemma-feature zero-minus-cpos-feature
+     zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-cpos-feature
+     zero-plus-lemma-feature zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-lemma-feature
+     zero-plus-lemma-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-cpos-feature
+     zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-cpos-feature
+     one-plus-cpos-feature)])
+
+(def two-words-features
+  (into two-words-fine-features two-words-coarse-features))
+
 (defmacro def-both-word-and-pos-feature [feature-name]
   (let [word-feature-name (symbol (str feature-name "-word-feature"))
-        pos-feature-name (symbol (str feature-name "-pos-feature"))]
+        lemma-feature-name (symbol (str feature-name "-lemma-feature"))
+        pos-feature-name (symbol (str feature-name "-pos-feature"))
+        cpos-feature-name (symbol (str feature-name "-cpos-feature"))]
     `(do
        (defn ~word-feature-name [config#]
          (-> config# ~feature-name :surface))
+       (defn ~lemma-feature-name [config#]
+         (-> config# ~feature-name :lemma))
        (defn ~pos-feature-name [config#]
-         (-> config# ~feature-name :pos-tag)))))
+         (-> config# ~feature-name :pos-tag))
+       (defn ~cpos-feature-name [config#]
+         (-> config# ~feature-name :cpos-tag)))))
 
 (defn head-of-stack [{stack :stack, relations :relations}]
   (let [t (peek stack) ; top of the stack
@@ -129,7 +191,7 @@
 (def-both-word-and-pos-feature rightmost-dependent-of-stack)
 (def-both-word-and-pos-feature leftmost-dependent-of-input)
 
-(def three-words-features
+(def three-words-fine-features
   [(def-conjunctive-feature-fn
      zero-plus-pos-feature one-plus-pos-feature two-plus-pos-feature)
 
@@ -148,6 +210,28 @@
    (def-conjunctive-feature-fn
      zero-plus-pos-feature zero-plus-pos-feature leftmost-dependent-of-input-pos-feature)])
 
+(def three-words-coarse-features
+  [(def-conjunctive-feature-fn
+     zero-plus-cpos-feature one-plus-cpos-feature two-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-cpos-feature zero-plus-cpos-feature one-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     head-of-stack-cpos-feature zero-plus-cpos-feature zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-cpos-feature leftmost-dependent-of-stack-cpos-feature zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-cpos-feature rightmost-dependent-of-stack-cpos-feature zero-plus-cpos-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-cpos-feature zero-plus-cpos-feature leftmost-dependent-of-input-cpos-feature)])
+
+(def three-words-features
+  (into three-words-fine-features three-words-coarse-features))
+
 (defn distance-feature [{stack :stack, input :input}]
   (let [i (:idx (peek stack))
         j (:idx (first input))
@@ -159,7 +243,7 @@
                -1)]
     dist))
 
-(def distance-features
+(def distance-fine-features
   [(def-conjunctive-feature-fn
      zero-minus-word-feature distance-feature)
 
@@ -177,6 +261,27 @@
 
    (def-conjunctive-feature-fn
      zero-minus-pos-feature zero-plus-pos-feature distance-feature)])
+
+(def distance-course-features
+  [(def-conjunctive-feature-fn
+     zero-minus-lemma-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-cpos-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-lemma-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-plus-cpos-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-lemma-feature zero-plus-lemma-feature distance-feature)
+
+   (def-conjunctive-feature-fn
+     zero-minus-cpos-feature zero-plus-cpos-feature distance-feature)])
+
+(def distance-features (into distance-fine-features distance-course-features))
 
 (def valency-features [])
 
