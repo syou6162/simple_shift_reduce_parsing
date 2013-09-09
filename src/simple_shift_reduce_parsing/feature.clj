@@ -152,7 +152,7 @@
   (let [i (:idx (peek stack))
         j (:idx (first input))
         dist (if (and i j)
-               (let [d (Math/abs (- i j))]
+               (let [d (Math/abs (int (- i j)))]
                  (cond (> d 10) 11
                        (> d 5) 6
                        :else d))
