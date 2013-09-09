@@ -1,7 +1,7 @@
 (ns simple_shift_reduce_parsing.util
   (:use [clj-utils.io :only (serialize deserialize)])
   (:use [clojure.string :only (split)])
-  (:use [dorothy.core])
+  (:use [dorothy.core :only (digraph dot save!)])
   (:require [simple_shift_reduce_parsing.word :as word]))
 
 (def root-surface "*root-surface*")
