@@ -63,22 +63,5 @@
         (println (apply str (interpose "\t" heads)))
         (println)))))
 
-(defn initialize-head-words [sentences]
-  "Convert :head into nil in each words in the sentences.
-
-   Ex)
-
-   [{:surface :root, :pos-tag :root, :idx 0, :head -1}
-    {:surface \"ms.\", :pos-tag \"NNP\", :idx 1, :head 2}]
-   =>
-   [{:surface :root, :pos-tag :root, :idx 0, :head nil}
-    {:surface \"ms.\", :pos-tag \"NNP\", :idx 1, :head nil}]"
-  (reduce
-   (fn [result sent]
-     (do
-       (conj result (vec (map #(assoc % :head nil) sent)))))
-   []
-   sentences))
-
 (defn load-models [model-filename]
   (deserialize model-filename))

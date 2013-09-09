@@ -16,24 +16,6 @@
 (use 'clojure.tools.logging 'clj-logging-config.log4j)
 (require '[clojure.tools.cli :as cli])
 
-(defn extract-surfaces [sentence]
-  (if (not (vector? sentence))
-    (if (empty? (:modifiers sentence))
-      [(:surface sentence)]
-      (apply conj [(:surface sentence)] (map extract-surfaces (:modifiers sentence))))
-    (vec (map extract-surfaces sentence))))
-
-(defn extract-heads' [sentence result]
-  (if (not (vector? sentence))
-    (if (empty? (:modifiers sentence))
-      [{:head (:head sentence) :idx (:idx sentence)}]
-      (vec (apply concat (conj result {:head (:head sentence) :idx (:idx sentence)})
-                  (map #(extract-heads' % result) (:modifiers sentence)))))
-    (vec (map #(extract-heads' % result) sentence))))
-
-(defn extract-heads [sentence]
-  (map :head (sort-by :idx (first (extract-heads' sentence [])))))
-
 (defn- get-cli-opts [args]
   (cli/cli args
            ["-h" "--help" "Show help" :default false :flag true]
@@ -87,7 +69,7 @@
   (load-feature-to-id feature-to-id-filename)
   (let [original-sentences (read-mst-format-file test-filename)
         models (load-models model-filename)
-        parsed-sentences (map (partial parse models) (initialize-head-words original-sentences))]
+        parsed-sentences (map (partial parse models) original-sentences)]
     (print-mst-format-file parsed-sentences)))
 
 (defn evaluate-sentences [{model-filename :model-filename
@@ -97,7 +79,7 @@
   (let [original-sentences (read-mst-format-file test-filename)
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
         models (load-model model-filename)
-        parsed-sentences (->> (initialize-head-words original-sentences)
+        parsed-sentences (->> original-sentences
                               (pmap (partial parse models))
                               (doall))]
     (debug "Finished loading models...")
