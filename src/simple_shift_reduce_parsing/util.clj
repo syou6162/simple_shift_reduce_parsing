@@ -1,10 +1,11 @@
 (ns simple_shift_reduce_parsing.util
   (:use [clj-utils.io :only (serialize deserialize)])
-  (:use [simple_shift_reduce_parsing.word])
   (:use [clojure.string :only (split)])
-  (:use [dorothy.core]))
+  (:use [dorothy.core])
+  (:require [simple_shift_reduce_parsing.word :as word]))
 
-(def Root :root)
+(def root-surface "*root-surface*")
+(def root-pos-tag "*root-pos-tag*")
 
 (defn read-mst-format-file [filename]
   "Read correct parsed sentences from mst formal file.
@@ -26,10 +27,9 @@
 			   (map clojure.string/lower-case (split line #"\t")))
                          (split lines #"\n"))]
 		(vec (map (fn [w pos-tag idx head]
-			    (struct word w pos-tag
-				    idx head))
-			  (vec (cons Root words))
-			  (vec (cons Root pos-tags))
+                            (word/make w pos-tag idx head))
+			  (vec (cons root-surface words))
+			  (vec (cons root-pos-tag pos-tags))
 			  (vec (range (inc (count words))))
 			  (vec (cons -1 (map
                                          #(Integer/parseInt %)
