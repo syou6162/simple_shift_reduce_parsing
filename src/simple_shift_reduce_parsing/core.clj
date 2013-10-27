@@ -78,15 +78,14 @@
   (load-feature-to-id feature-to-id-filename)
   (let [original-sentences (read-mst-format-file test-filename)
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
-        models (load-model model-filename)
-        parsed-sentences (->> original-sentences
-                              (pmap (partial parse models))
-                              (doall))]
+        models (load-model model-filename)]
     (debug "Finished loading models...")
-    (debug (str "Started parsing " (count original-sentences) " sentences..."))
-    (debug (str "Finished parsing " (count parsed-sentences) " sentences..."))
-    (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
-    (info (str "Complete accuracy: " (get-complete-accuracy original-sentences parsed-sentences)))))
+    (doseq [k [1 2 4 8 16 32 64 128]]
+      (let [decode (partial k-best-parse models k)
+            parsed-sentences (my-pmap decode original-sentences)]
+        (info (str "k = " k))
+        (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
+        (info (str "Complete accuracy: " (get-complete-accuracy original-sentences parsed-sentences)))))))
 
 (defn export-mode [test-filename]
   (let [sentences (read-mst-format-file test-filename)]
