@@ -2,7 +2,10 @@
   (:use simple_shift_reduce_parsing.configuration)
   (:refer-clojure :exclude [reduce]))
 
-(defn shift [{old-stack :stack
+(import '[simple_shift_reduce_parsing.configuration Configuration])
+
+(defn shift [^Configuration
+             {old-stack :stack
               old-input :input
               :as configuration}]
   "Shift operation for configuration.
@@ -16,12 +19,13 @@
         (assoc :input input)
         (vary-meta update-in [:prev-actions] conj :shift))))
 
-(defn reducable? [config]
+(defn reducable? [^Configuration config]
   (or (not (empty? (:stack config)))
       (contains? (-> config :relations :modifier-to-head)
                  (peek (:stack config)))))
 
-(defn reduce [{old-stack :stack
+(defn reduce [^Configuration
+              {old-stack :stack
                old-input :input
                :as configuration}]
   "Reduce operation for configuration
@@ -33,12 +37,13 @@
           (vary-meta update-in [:prev-actions] conj :reduce)))
     (shift configuration)))
 
-(defn leftable? [config]
+(defn leftable? [^Configuration config]
   (and (not (empty? (:stack config)))
        (not (contains? (-> config :relations :modifier-to-head)
                        (peek (:stack config))))))
 
-(defn left [{old-stack :stack
+(defn left [^Configuration
+            {old-stack :stack
              old-input :input
              old-relations :relations
              :as config}]
@@ -56,12 +61,13 @@
           (vary-meta update-in [:prev-actions] conj :left)))
     (reduce config)))
 
-(defn rightable? [config]
+(defn rightable? [^Configuration config]
   (and (not (empty? (:stack config)))
        (not (contains? (-> config :relations :modifier-to-head)
                        (first (-> config :input))))))
 
-(defn right [{old-stack :stack
+(defn right [^Configuration
+             {old-stack :stack
               old-input :input
               old-relation :relation
               :as config}]
@@ -123,7 +129,7 @@
 ;;     # Rule 5: Default: return SHIFT
 ;;     return "shift"
 
-(defn next-gold-action [{stack :stack input :input}]
+(defn next-gold-action [^Configuration {stack :stack input :input}]
   (if (empty? stack)
     :shift
     (let [n (peek stack)
@@ -137,12 +143,12 @@
        :reduce
        :else :shift))))
 
-(defn- get-gold-actions' [{input :input :as config} actions]
+(defn- get-gold-actions' [^Configuration {input :input :as config} actions]
   (if (empty? input)
     actions
     (let [next-action (next-gold-action config)]
       (recur ((action-mapping next-action) config)
              (conj actions next-action)))))
 
-(defn get-gold-actions [config]
+(defn get-gold-actions [^Configuration config]
   (get-gold-actions' config []))
