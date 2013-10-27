@@ -31,7 +31,7 @@
     (- n (- idx))))
 
 (defmacro def-around-feature-fn [feature-name idx type]
-  `(defn ~feature-name [configuration#]
+  `(defn ~feature-name [^Configuration configuration#]
      (if (neg? ~idx)
        (let [stack# (get configuration# :stack)]
          (get-in stack# [(get-stack-idx stack# ~idx) ~type]))
@@ -40,7 +40,7 @@
 (defmacro def-conjunctive-feature-fn [& fs-list]
   (let [fs (vec fs-list)
         feature-name (symbol (clojure.string/join "-and-" fs))]
-    `(defn ~feature-name [configuration#]
+    `(defn ~feature-name [^Configuration configuration#]
        (let [tmp# (map (fn [f#] (f# configuration#)) ~fs)]
          (if (every? #(not (nil? %)) tmp#)
            (clojure.string/join \& tmp#))))))
@@ -157,31 +157,31 @@
         pos-feature-name (symbol (str feature-name "-pos-feature"))
         cpos-feature-name (symbol (str feature-name "-cpos-feature"))]
     `(do
-       (defn ~word-feature-name [config#]
+       (defn ~word-feature-name [^Configuration config#]
          (-> config# ~feature-name :surface))
-       (defn ~lemma-feature-name [config#]
+       (defn ~lemma-feature-name [^Configuration config#]
          (-> config# ~feature-name :lemma))
-       (defn ~pos-feature-name [config#]
+       (defn ~pos-feature-name [^Configuration config#]
          (-> config# ~feature-name :pos-tag))
-       (defn ~cpos-feature-name [config#]
+       (defn ~cpos-feature-name [^Configuration config#]
          (-> config# ~feature-name :cpos-tag)))))
 
-(defn head-of-stack [{stack :stack, relations :relations}]
+(defn head-of-stack [^Configuration {stack :stack, relations :relations}]
   (let [t (peek stack) ; top of the stack
         th (get-in relations [:modifier-to-head t])] ; head of t
     th))
 
-(defn leftmost-dependent-of-stack [{stack :stack, relations :relations}]
+(defn leftmost-dependent-of-stack [^Configuration {stack :stack, relations :relations}]
   (let [t (peek stack) ; top of the stack
         tl (first (get-in relations [:head-to-modifiers t]))]
     tl))
 
-(defn rightmost-dependent-of-stack [{stack :stack, relations :relations}]
+(defn rightmost-dependent-of-stack [^Configuration {stack :stack, relations :relations}]
   (let [t (peek stack) ; top of the stack
         tr (peek (get-in relations [:head-to-modifiers t]))]
     tr))
 
-(defn leftmost-dependent-of-input [{input :input, relations :relations}]
+(defn leftmost-dependent-of-input [^Configuration {input :input, relations :relations}]
   (let [n (first input) ; next input token
         nl (first (get (:head-to-modifiers relations) n))] ; leftmost dependent of n
     nl))
@@ -232,7 +232,7 @@
 (def three-words-features
   (into three-words-fine-features three-words-coarse-features))
 
-(defn distance-feature [{stack :stack, input :input}]
+(defn distance-feature [^Configuration {stack :stack, input :input}]
   (let [i (:idx (peek stack))
         j (:idx (first input))
         dist (if (and i j)
@@ -302,7 +302,7 @@
         distance-features valency-features unigram-features third-order-features]
        (reduce into [])))
 
-(defn get-fv [configuration]
+(defn get-fv [^Configuration configuration]
   (let [raw-fv (->> *all-features*
                     (map (fn [feature-fn]
                            (struct feature
@@ -316,15 +316,15 @@
          (vec))))
 
 (defn generate-gold [sentence]
-  (let [init-config (config/make-Configuration sentence)
+  (let [^Configuration init-config (config/make-Configuration sentence)
         actions (action/get-gold-actions init-config)]
-    (loop [config init-config
+    (loop [^Configuration config init-config
            actions-idx 0
            result []]
       (if (= actions-idx (count actions))
         result
         (let [current-action (nth actions actions-idx)
-              next-config ((action/action-mapping current-action) config)]
+              ^Configuration next-config ((action/action-mapping current-action) config)]
           (recur
            next-config
            (inc actions-idx)
