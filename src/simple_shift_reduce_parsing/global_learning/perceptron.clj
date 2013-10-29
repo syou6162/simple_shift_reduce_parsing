@@ -38,18 +38,21 @@
                          (max 0.0)))]
     step-size))
 
-; "w = w + alpha (phi(x_i, y_i) - phi(x_i, hat{y_i}))"
-(defn update-weight [weight step-size gold prediction]
-  (if (= (map :head gold) (map :head prediction))
-    weight
-    (->> (get-fv-diff gold prediction)
-         (mapv (fn [[k v]] [k (* step-size v)]))
-         (reduce (fn [result [fv-idx v]]
-                   (assoc result fv-idx (+ v (get result fv-idx 0.0))))
-                 weight))))
+(defn update-weight [weight diff scale]
+  (->> diff
+       (mapv (fn [[k v]] [k (* scale v)]))
+       (reduce (fn [result [fv-idx v]]
+                 (assoc result fv-idx (+ v (get result fv-idx 0.0))))
+               weight)))
 
-(defn add-weight [w1 w2]
-  (reduce
-   (fn [result [k v]]
-     (assoc result k (+ (get result k 0.0) v)))
-   w1 w2))
+(defn get-averaged-weight
+  "w = w_final - w_a / t"
+  [cum-count weight cum-weight]
+  (if (or (zero? cum-count) (neg? cum-count))
+    weight
+    (->> cum-weight
+         (reduce
+          (fn [result [k v]]
+            (let [new-v (- (get result k 0.0) (/ v cum-count))]
+              (assoc result k new-v)))
+          weight))))
