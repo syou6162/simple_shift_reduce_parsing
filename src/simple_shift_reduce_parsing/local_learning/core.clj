@@ -30,6 +30,28 @@
            ["--logging-level" "level of logging" :default :debug :parse-fn #(keyword %)]
            ["--feature-to-id-filename" "File name of the feature2id mapping" :default "feature-to-id.bin"]))
 
+(defn partition-all-for-pmap
+  ([num-of-threads coll]
+     (let [n (count coll)]
+       (partition-all (/ n num-of-threads) coll)))
+  ([coll]
+     (partition-all-for-pmap
+      (+ 2 (.. Runtime getRuntime availableProcessors))
+      coll)))
+
+(defn my-pmap
+  ([num-of-threads f coll]
+     (let [n (count coll)]
+       (->> coll
+            (partition-all (/ n num-of-threads))
+            (pmap (fn [chuck] (mapv f chuck)))
+            (reduce into []))))
+  ([f coll]
+     (my-pmap
+      (+ 2 (.. Runtime getRuntime availableProcessors))
+      f
+      coll)))
+
 (defn train-model [{training-filename :training-filename
                     model-filename :model-filename
                     feature-to-id-filename :feature-to-id-filename
@@ -45,7 +67,7 @@
                  (new Parameter SolverType/L2R_LR_DUAL (* x y) 0.1))
         pairs (->> params
                    (shuffle-with-random)
-                   (pmap
+                   (my-pmap
                     (fn [param]
                       (let [target (->> (do-cross-validation
                                          param training-examples k)
