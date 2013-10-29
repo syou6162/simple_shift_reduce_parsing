@@ -1,5 +1,5 @@
-(ns simple_shift_reduce_parsing.parse
-  (:use [simple_shift_reduce_parsing.feature])
+(ns simple_shift_reduce_parsing.local_learning.parse
+  (:use [simple_shift_reduce_parsing.local_learning.feature])
   (:require [simple_shift_reduce_parsing.configuration :as config])
   (:require [simple_shift_reduce_parsing.action :as action])
   (:use [liblinear.core

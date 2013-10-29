@@ -1,8 +1,11 @@
-(ns simple_shift_reduce_parsing.core
+(ns simple_shift_reduce_parsing.local_learning.core
   (:use simple_shift_reduce_parsing.util
-        simple_shift_reduce_parsing.feature
-        simple_shift_reduce_parsing.parse
-        simple_shift_reduce_parsing.evaluation)
+        simple_shift_reduce_parsing.evaluation
+        simple_shift_reduce_parsing.local_learning.parse)
+  (:use [simple_shift_reduce_parsing.feature
+         :only (save-feature-to-id clear-feature-to-id! load-feature-to-id)])
+  (:use [simple_shift_reduce_parsing.local_learning.feature
+         :only (generate-gold)])
   (:use [clj-utils.random :only (shuffle-with-random)])
   (:use [clj-utils.evaluation :only (get-accuracy)])
   (:import [de.bwaldvogel.liblinear Parameter])
@@ -27,6 +30,28 @@
            ["--logging-level" "level of logging" :default :debug :parse-fn #(keyword %)]
            ["--feature-to-id-filename" "File name of the feature2id mapping" :default "feature-to-id.bin"]))
 
+(defn partition-all-for-pmap
+  ([num-of-threads coll]
+     (let [n (count coll)]
+       (partition-all (/ n num-of-threads) coll)))
+  ([coll]
+     (partition-all-for-pmap
+      (+ 2 (.. Runtime getRuntime availableProcessors))
+      coll)))
+
+(defn my-pmap
+  ([num-of-threads f coll]
+     (let [n (count coll)]
+       (->> coll
+            (partition-all (/ n num-of-threads))
+            (pmap (fn [chuck] (mapv f chuck)))
+            (reduce into []))))
+  ([f coll]
+     (my-pmap
+      (+ 2 (.. Runtime getRuntime availableProcessors))
+      f
+      coll)))
+
 (defn train-model [{training-filename :training-filename
                     model-filename :model-filename
                     feature-to-id-filename :feature-to-id-filename
@@ -42,7 +67,7 @@
                  (new Parameter SolverType/L2R_LR_DUAL (* x y) 0.1))
         pairs (->> params
                    (shuffle-with-random)
-                   (pmap
+                   (my-pmap
                     (fn [param]
                       (let [target (->> (do-cross-validation
                                          param training-examples k)
@@ -68,8 +93,8 @@
                   feature-to-id-filename :feature-to-id-filename}]
   (load-feature-to-id feature-to-id-filename)
   (let [original-sentences (read-mst-format-file test-filename)
-        models (load-models model-filename)
-        parsed-sentences (map (partial parse models) original-sentences)]
+        model (load-model model-filename)
+        parsed-sentences (map (partial parse model) original-sentences)]
     (print-mst-format-file parsed-sentences)))
 
 (defn evaluate-sentences [{model-filename :model-filename
@@ -78,10 +103,10 @@
   (load-feature-to-id feature-to-id-filename)
   (let [original-sentences (read-mst-format-file test-filename)
         _ (debug (str "Finished reading " (count original-sentences) " instances from " test-filename "..."))
-        models (load-model model-filename)]
-    (debug "Finished loading models...")
+        model (load-model model-filename)]
+    (debug "Finished loading model...")
     (doseq [k [1 2 4 8 16 32 64 128]]
-      (let [decode (partial k-best-parse models k)
+      (let [decode (partial k-best-parse model k)
             parsed-sentences (my-pmap decode original-sentences)]
         (info (str "k = " k))
         (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
