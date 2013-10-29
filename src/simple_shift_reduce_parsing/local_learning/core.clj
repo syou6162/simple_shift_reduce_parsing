@@ -1,8 +1,11 @@
-(ns simple_shift_reduce_parsing.core
+(ns simple_shift_reduce_parsing.local_learning.core
   (:use simple_shift_reduce_parsing.util
-        simple_shift_reduce_parsing.feature
-        simple_shift_reduce_parsing.parse
-        simple_shift_reduce_parsing.evaluation)
+        simple_shift_reduce_parsing.evaluation
+        simple_shift_reduce_parsing.local_learning.parse)
+  (:use [simple_shift_reduce_parsing.feature
+         :only (save-feature-to-id clear-feature-to-id! load-feature-to-id)])
+  (:use [simple_shift_reduce_parsing.local_learning.feature
+         :only (generate-gold)])
   (:use [clj-utils.random :only (shuffle-with-random)])
   (:use [clj-utils.evaluation :only (get-accuracy)])
   (:import [de.bwaldvogel.liblinear Parameter])
