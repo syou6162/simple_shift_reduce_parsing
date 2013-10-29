@@ -1,7 +1,7 @@
 (ns simple_shift_reduce_parsing.global_learning.core
   (:use [simple_shift_reduce_parsing.util :only (read-mst-format-file)])
   (:use [simple_shift_reduce_parsing.global_learning.perceptron
-         :only (get-fv-diff get-step-size update-weight add-weight)])
+         :only (get-fv-diff get-step-size update-weight get-averaged-weight)])
   (:use [simple_shift_reduce_parsing.global_learning.feature
          :only (with-oracle-fv)])
   (:use [simple_shift_reduce_parsing.global_learning.parse
@@ -35,8 +35,9 @@
   (let [training-sentences (->> training-filename
                                 (read-mst-format-file)
                                 (shuffle-with-random)
+                                (map with-oracle-fv)
                                 (vec))
-        training-sentences-with-oracle-fv (mapv with-oracle-fv training-sentences)
+        n (count training-sentences)
         dev-sentences (->> dev-filename
                            (read-mst-format-file)
                            (shuffle-with-random)
@@ -44,20 +45,27 @@
     (loop [iter 0
            weight {}
            cum-weight {}]
-      (let [[new-weight new-cum-weight] (->> training-sentences-with-oracle-fv
+      (let [predictions (atom [])
+            [new-weight new-cum-weight] (->> (range n)
                                              (reduce
-                                              (fn [[w cum-w] gold]
-                                                (let [decode (partial parse-for-training w beam-size)
+                                              (fn [[w cum-w] idx]
+                                                (let [gold (nth training-sentences idx)
+                                                      decode (partial parse-for-training w beam-size)
                                                       prediction (decode gold)
                                                       fv-diff (get-fv-diff gold prediction)
                                                       step-size (get-step-size w gold prediction fv-diff)
-                                                      new-w (update-weight w step-size gold prediction)
-                                                      new-cum-w (add-weight cum-w new-w)]
+                                                      diff (mapv (fn [[k v]] [k (* step-size v)]) fv-diff)
+                                                      new-w (update-weight w diff 1.0)
+                                                      t (+ (* iter n) (inc idx))
+                                                      new-cum-w (update-weight cum-w diff t)]
+                                                  (swap! predictions conj prediction)
                                                   [new-w new-cum-w]))
                                               [weight cum-weight]))
-            decode (partial parse new-cum-weight beam-size)]
+            cum-count (* (inc iter) n)
+            avg-w (get-averaged-weight cum-count new-weight new-cum-weight)
+            decode (partial parse avg-w beam-size)]
         (->> (str iter ", "
-                  (get-dependency-accuracy training-sentences (mapv decode training-sentences))
+                  (get-dependency-accuracy training-sentences @predictions)
                   ", "
                   (get-dependency-accuracy dev-sentences (mapv decode dev-sentences)))
              (println))
