@@ -7,6 +7,7 @@
 ;; labelに関する素性は未実装
 ;; http://www.sutd.edu.sg/cmsresource/faculty/yuezhang/acl11j.pdf
 
+(import '[simple_shift_reduce_parsing.word Word])
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
 (defstruct feature :type :str)
@@ -31,11 +32,14 @@
     (- n (- idx))))
 
 (defmacro def-around-feature-fn [feature-name idx type]
-  `(defn ~feature-name [^Configuration configuration#]
-     (if (neg? ~idx)
+  (if (neg? idx)
+    `(defn ~feature-name [^Configuration configuration#]
        (let [stack# (get configuration# :stack)]
-         (get-in stack# [(get-stack-idx stack# ~idx) ~type]))
-       (get-in configuration# [:input ~idx ~type]))))
+         (if-let [w# (get-in stack# [(get-stack-idx stack# ~idx)])]
+           (~type ^Word w#))))
+    `(defn ~feature-name [^Configuration configuration#]
+       (if-let [w# (get-in configuration# [:input ~idx])]
+         (~type ^Word w#)))))
 
 (defmacro def-conjunctive-feature-fn [& fs-list]
   (let [fs (vec fs-list)
