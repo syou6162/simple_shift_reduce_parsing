@@ -25,10 +25,11 @@
        (inc result)))
    0.0 (-> config :relations :modifier-to-head)))
 
-(defn expand [weight sentence ^Configuration config]
-  (letfn [(action-with-meta [fv' act-id]
-            (let [^Configuration next-config ((action/id2action act-id) config)
-                  fv (get-fv fv' act-id)
+(defn expand [^Configuration config weight fv]
+  (letfn [(action-with-meta [act-id]
+            (let [next-action (action/id2action act-id)
+                  ^Configuration next-config (next-action config)
+                  fv (get-fv fv act-id)
                   score (+ (-> config meta (get :score 0.0))
                            (inner-product weight fv))]
               (with-meta
@@ -37,12 +38,11 @@
                     (assoc :prev-config (with-meta config {}))
                     (assoc :score score)
                     (update-in [:fv] conj fv)))))]
-    (let [fv (vec (common-feature/get-fv config))
-          reduce-act-id 2]
+    (let [reduce-act-id 2]
       (if (empty? (:input config))
-        [(action-with-meta fv reduce-act-id)]
+        [(action-with-meta reduce-act-id)]
         (->> (action/get-possible-actions config)
-             (mapv #(action-with-meta fv %)))))))
+             (mapv action-with-meta))))))
 
 (defn parse'
   "Beam searchを使ってgreedyに探索してdecodeする関数。
@@ -58,11 +58,11 @@
                     (assoc-in sent [(:idx modifier) :head] (:idx head)))
                   sentence pairs)
           (-> (meta sentence)
-              (assoc :fv (apply merge-with + (-> config meta :fv)))
-              (assoc :history (-> config meta :history)))))
+              (assoc :fv (apply merge-with + (-> config meta :fv))))))
       (let [new-beam (->> beam
-                          (mapv (fn [^Configuration config]
-                                  (expand weight sentence config)))
+                          (map (fn [^Configuration config]
+                                 (let [fv (common-feature/get-fv config)]
+                                   (expand config weight fv))))
                           (reduce into [])
                           (sort-by (fn [config] (get-score' sentence config)) >)
                           (take beam-size)

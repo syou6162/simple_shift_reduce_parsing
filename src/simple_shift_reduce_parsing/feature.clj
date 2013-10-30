@@ -7,6 +7,7 @@
 ;; labelに関する素性は未実装
 ;; http://www.sutd.edu.sg/cmsresource/faculty/yuezhang/acl11j.pdf
 
+(import '[simple_shift_reduce_parsing.word Word])
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
 (defstruct feature :type :str)
@@ -31,11 +32,14 @@
     (- n (- idx))))
 
 (defmacro def-around-feature-fn [feature-name idx type]
-  `(defn ~feature-name [^Configuration configuration#]
-     (if (neg? ~idx)
+  (if (neg? idx)
+    `(defn ~feature-name [^Configuration configuration#]
        (let [stack# (get configuration# :stack)]
-         (get-in stack# [(get-stack-idx stack# ~idx) ~type]))
-       (get-in configuration# [:input ~idx ~type]))))
+         (if-let [w# (get-in stack# [(get-stack-idx stack# ~idx)])]
+           (~type ^Word w#))))
+    `(defn ~feature-name [^Configuration configuration#]
+       (if-let [w# (get-in configuration# [:input ~idx])]
+         (~type ^Word w#)))))
 
 (defmacro def-conjunctive-feature-fn [& fs-list]
   (let [fs (vec fs-list)
@@ -46,37 +50,37 @@
            (clojure.string/join \& tmp#))))))
 
 (def single-word-features
-  [(def-around-feature-fn zero-minus-word-feature -1 :surface)
-   (def-around-feature-fn zero-minus-lemma-feature -1 :lemma)
-   (def-around-feature-fn zero-minus-pos-feature -1 :pos-tag)
-   (def-around-feature-fn zero-minus-cpos-feature -1 :cpos-tag)
+  [(def-around-feature-fn zero-minus-word-feature -1 .surface)
+   (def-around-feature-fn zero-minus-lemma-feature -1 .lemma)
+   (def-around-feature-fn zero-minus-pos-feature -1 .pos-tag)
+   (def-around-feature-fn zero-minus-cpos-feature -1 .cpos-tag)
    (def-conjunctive-feature-fn zero-minus-word-feature zero-minus-pos-feature)
    (def-conjunctive-feature-fn zero-minus-word-feature zero-minus-cpos-feature)
    (def-conjunctive-feature-fn zero-minus-lemma-feature zero-minus-pos-feature)
    (def-conjunctive-feature-fn zero-minus-lemma-feature zero-minus-cpos-feature)
 
-   (def-around-feature-fn zero-plus-word-feature 0 :surface)
-   (def-around-feature-fn zero-plus-lemma-feature 0 :lemma)
-   (def-around-feature-fn zero-plus-pos-feature 0 :pos-tag)
-   (def-around-feature-fn zero-plus-cpos-feature 0 :cpos-tag)
+   (def-around-feature-fn zero-plus-word-feature 0 .surface)
+   (def-around-feature-fn zero-plus-lemma-feature 0 .lemma)
+   (def-around-feature-fn zero-plus-pos-feature 0 .pos-tag)
+   (def-around-feature-fn zero-plus-cpos-feature 0 .cpos-tag)
    (def-conjunctive-feature-fn zero-plus-word-feature zero-plus-pos-feature)
    (def-conjunctive-feature-fn zero-plus-word-feature zero-plus-cpos-feature)
    (def-conjunctive-feature-fn zero-plus-lemma-feature zero-plus-pos-feature)
    (def-conjunctive-feature-fn zero-plus-lemma-feature zero-plus-cpos-feature)
 
-   (def-around-feature-fn one-plus-word-feature 1 :surface)
-   (def-around-feature-fn one-plus-lemma-feature 1 :lemma)
-   (def-around-feature-fn one-plus-pos-feature 1 :pos-tag)
-   (def-around-feature-fn one-plus-cpos-feature 1 :cpos-tag)
+   (def-around-feature-fn one-plus-word-feature 1 .surface)
+   (def-around-feature-fn one-plus-lemma-feature 1 .lemma)
+   (def-around-feature-fn one-plus-pos-feature 1 .pos-tag)
+   (def-around-feature-fn one-plus-cpos-feature 1 .cpos-tag)
    (def-conjunctive-feature-fn one-plus-word-feature one-plus-pos-feature)
    (def-conjunctive-feature-fn one-plus-word-feature one-plus-cpos-feature)
    (def-conjunctive-feature-fn one-plus-lemma-feature one-plus-pos-feature)
    (def-conjunctive-feature-fn one-plus-lemma-feature one-plus-cpos-feature)
 
-   (def-around-feature-fn two-plus-word-feature 2 :surface)
-   (def-around-feature-fn two-plus-lemma-feature 2 :lemma)
-   (def-around-feature-fn two-plus-pos-feature 2 :pos-tag)
-   (def-around-feature-fn two-plus-cpos-feature 2 :cpos-tag)
+   (def-around-feature-fn two-plus-word-feature 2 .surface)
+   (def-around-feature-fn two-plus-lemma-feature 2 .lemma)
+   (def-around-feature-fn two-plus-pos-feature 2 .pos-tag)
+   (def-around-feature-fn two-plus-cpos-feature 2 .cpos-tag)
    (def-conjunctive-feature-fn two-plus-word-feature two-plus-pos-feature)
    (def-conjunctive-feature-fn two-plus-word-feature two-plus-cpos-feature)
    (def-conjunctive-feature-fn two-plus-lemma-feature two-plus-pos-feature)
