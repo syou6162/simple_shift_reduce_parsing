@@ -10,26 +10,41 @@
 (import '[simple_shift_reduce_parsing.word Word])
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
-(defstruct feature :type :str)
+(import '[TStringIntHashMap])
+(import '[TStringStringHashMapFactory])
+(import '[gnu.trove.map.hash TCustomHashMap])
 
-(let [mapping (atom {})]
-  (defn feature-to-id [feature]
-    (let [v (get @mapping feature)
-          max-id (count @mapping)]
-      (if v
-        v
-        (do (swap! mapping assoc feature max-id)
-            max-id))))
-  (defn save-feature-to-id [filename]
-    (serialize @mapping filename))
-  (defn load-feature-to-id [filename]
-    (reset! mapping (deserialize filename)))
+(let [^TStringIntHashMap mapping (TStringIntHashMap.)]
+  (defn max-feature-id [] (.size mapping))
+  (defn feature-to-id [^String feature]
+    (if (.containsKey mapping feature)
+      (.get mapping feature)
+      (let [v (max-feature-id)]
+        (.put mapping feature v)
+        v)))
+  (defn save-feature-to-id [^String filename]
+    (let [file-out (new java.io.FileOutputStream filename)
+          file-obj (new java.io.ObjectOutputStream file-out)]
+      (.writeExternal mapping file-obj)
+      (.close file-obj)
+      (.close file-out)))
+  (defn load-feature-to-id [^String filename]
+    (let [in-file (new java.io.FileInputStream filename)
+          in-obj (new java.io.ObjectInputStream in-file)]
+      (.readExternal mapping in-obj)
+      (.close in-obj)
+      (.close in-file)))
   (defn clear-feature-to-id! []
-    (reset! mapping {})))
+    (.clear mapping)))
 
 (defn get-stack-idx [stack idx]
   (let [n (count stack)]
     (- n (- idx))))
+
+(defn safe-nth [coll idx]
+  (if (and (not (neg? idx))
+           (< idx (count coll)))
+    (nth coll idx)))
 
 (defmacro def-around-feature-fn [feature-name idx type]
   (if (neg? idx)
@@ -38,16 +53,31 @@
          (if-let [w# (get-in stack# [(get-stack-idx stack# ~idx)])]
            (~type ^Word w#))))
     `(defn ~feature-name [^Configuration configuration#]
-       (if-let [w# (get-in configuration# [:input ~idx])]
+       (if-let [w# (safe-nth (.input configuration#) ~idx)]
          (~type ^Word w#)))))
 
 (defmacro def-conjunctive-feature-fn [& fs-list]
   (let [fs (vec fs-list)
+        fv-names (mapv str fs)
         feature-name (symbol (clojure.string/join "-and-" fs))]
-    `(defn ~feature-name [^Configuration configuration#]
-       (let [tmp# (map (fn [f#] (f# configuration#)) ~fs)]
-         (if (every? #(not (nil? %)) tmp#)
-           (clojure.string/join \& tmp#))))))
+    `(defn ~feature-name [^Configuration config#]
+       (let [^StringBuilder sb# (new StringBuilder)
+             ^TCustomHashMap fv# (-> config# meta :raw-fv)
+             flag# (atom true)] ;; 全ての値がnilでない場合に真を管理するflag
+         (doseq [^long idx# (range (count ~fs)) :when @flag#]
+           (let [^String fname# (nth ~fv-names idx#)]
+             (if-let [v1# (.get fv# fname#)]
+               (.append sb# (.toString ^String v1#))
+               (if-let [v2# ((nth ~fs idx#) config#)]
+                 (let [^String f# (-> (new StringBuilder)
+                                      (.append fname#)
+                                      (.append "-and-")
+                                      (.append (.toString ^String v2#))
+                                      (.toString))]
+                   (.put fv# fname# f#)
+                   (.append sb# f#))
+                 (reset! flag# false)))))
+         (if @flag# (.toString sb#))))))
 
 (def single-word-features
   [(def-around-feature-fn zero-minus-word-feature -1 .surface)
@@ -170,24 +200,24 @@
        (defn ~cpos-feature-name [^Configuration config#]
          (-> config# ~feature-name :cpos-tag)))))
 
-(defn head-of-stack [^Configuration {stack :stack, relations :relations}]
-  (let [t (peek stack) ; top of the stack
-        th (get-in relations [:modifier-to-head t])] ; head of t
+(defn head-of-stack [^Configuration config]
+  (let [t (peek (.stack config)) ; top of the stack
+        th (get-in config [:relations :modifier-to-head t])] ; head of t
     th))
 
-(defn leftmost-dependent-of-stack [^Configuration {stack :stack, relations :relations}]
-  (let [t (peek stack) ; top of the stack
-        tl (first (get-in relations [:head-to-modifiers t]))]
+(defn leftmost-dependent-of-stack [^Configuration config]
+  (let [t (peek (.stack config)) ; top of the stack
+        tl (first (get-in config [:relations :head-to-modifiers t]))]
     tl))
 
-(defn rightmost-dependent-of-stack [^Configuration {stack :stack, relations :relations}]
-  (let [t (peek stack) ; top of the stack
-        tr (peek (get-in relations [:head-to-modifiers t]))]
+(defn rightmost-dependent-of-stack [^Configuration config]
+  (let [t (peek (.stack config)) ; top of the stack
+        tr (peek (get-in config [:relations :head-to-modifiers t]))]
     tr))
 
-(defn leftmost-dependent-of-input [^Configuration {input :input, relations :relations}]
-  (let [n (first input) ; next input token
-        nl (first (get (:head-to-modifiers relations) n))] ; leftmost dependent of n
+(defn leftmost-dependent-of-input [^Configuration config]
+  (let [n (first (.input config)) ; next input token
+        nl (first (get-in config [:relations :head-to-modifiers n]))] ; leftmost dependent of n
     nl))
 
 (def-both-word-and-pos-feature head-of-stack)
@@ -236,16 +266,16 @@
 (def three-words-features
   (into three-words-fine-features three-words-coarse-features))
 
-(defn distance-feature [^Configuration {stack :stack, input :input}]
-  (let [i (:idx (peek stack))
-        j (:idx (first input))
+(defn distance-feature [^Configuration config]
+  (let [i (:idx (peek (.stack config)))
+        j (:idx (first (.input config)))
         dist (if (and i j)
                (let [d (Math/abs (int (- i j)))]
                  (cond (> d 10) 11
                        (> d 5) 6
                        :else d))
                -1)]
-    dist))
+    (str dist)))
 
 (def distance-fine-features
   [(def-conjunctive-feature-fn
@@ -304,14 +334,42 @@
 (def ^:dynamic *all-features*
   (->> [single-word-features two-words-features three-words-features
         distance-features valency-features unigram-features third-order-features]
-       (reduce into [])))
+       (reduce into [])
+       (sort-by #(-> % meta :name str count))))
 
-(defn get-fv [^Configuration configuration]
-  (let [raw-fv (->> *all-features*
-                    (map (fn [feature-fn]
-                           (struct feature
-                                   (-> feature-fn meta :name)
-                                   (feature-fn configuration))))
-                    (filter (fn [fv] (not (nil? (:str fv))))))]
-    (->> raw-fv
-         (map (fn [f] (str (:type f) "-and-" (:str f)))))))
+(def single-features
+  (->> *all-features*
+       (remove
+        (fn [f]
+          (let [s (-> f meta :name str)]
+            (re-find #"-and-" s))))
+       (doall)))
+
+(def conjunctive-features
+  (->> *all-features*
+       (filter
+        (fn [f]
+          (let [s (-> f meta :name str)]
+            (re-find #"-and-" s))))
+       (doall)))
+
+(defn get-fv [^Configuration config']
+  (let [config (with-meta config'
+                 {:raw-fv (TStringStringHashMapFactory/create)})
+        ^TCustomHashMap fv (-> config meta :raw-fv)
+        result (atom '())]
+    (doseq [feature-fn single-features]
+      (let [^String fname (-> feature-fn meta :name str)
+            f' (-> config feature-fn)
+            f (if f'
+                (-> (new StringBuilder fname)
+                    (.append "-and-")
+                    (.append (.toString ^String f'))
+                    (.toString)))]
+        (.put fv fname f)
+        (when f
+          (swap! result conj f))))
+    (doseq [feature-fn conjunctive-features]
+      (when-let [f (-> config feature-fn)]
+        (swap! result conj f)))
+    @result))

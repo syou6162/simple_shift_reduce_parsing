@@ -2,89 +2,65 @@
   (:use simple_shift_reduce_parsing.configuration)
   (:refer-clojure :exclude [reduce]))
 
+(import '[simple_shift_reduce_parsing.word Word])
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
-(defn shift [^Configuration
-             {old-stack :stack
-              old-input :input
-              :as configuration}]
+(defn shift [^Configuration config]
   "Shift operation for configuration.
    <S, n | I, A> => <n | S, I , A>"
-  (assert (not (empty? old-input)))
-  (let [n (first old-input)
-        stack (conj old-stack n)
-        input (vec (rest old-input))]
-    (-> configuration
-        (assoc :stack stack)
-        (assoc :input input)
-        (vary-meta update-in [:prev-actions] conj :shift))))
+  (let [^Word n (first (.input config))]
+    (-> config
+        (update-in [:stack] conj n)
+        (update-in [:input] rest))))
 
 (defn reducable? [^Configuration config]
-  (or (not (empty? (:stack config)))
+  (or (not (empty? (.stack config)))
       (contains? (-> config :relations :modifier-to-head)
-                 (peek (:stack config)))))
+                 (peek (.stack config)))))
 
-(defn reduce [^Configuration
-              {old-stack :stack
-               old-input :input
-               :as configuration}]
+(defn reduce [^Configuration config]
   "Reduce operation for configuration
    <n | S, I , A> => <S, I, A>"
-  (if (reducable? configuration)
-    (let [stack (pop old-stack)]
-      (-> configuration
-          (assoc :stack stack)
-          (vary-meta update-in [:prev-actions] conj :reduce)))
-    (shift configuration)))
+  (if (reducable? config)
+    (-> config
+        (update-in [:stack] pop))
+    (shift config)))
 
 (defn leftable? [^Configuration config]
   (and (not (empty? (:stack config)))
+       (not (empty? (:input config)))
        (not (contains? (-> config :relations :modifier-to-head)
                        (peek (:stack config))))))
 
-(defn left [^Configuration
-            {old-stack :stack
-             old-input :input
-             old-relations :relations
-             :as config}]
+(defn left [^Configuration config]
   "Left operation for configuration
    <n | S, n' | I, A> => <S, n' | I, A \\cup {(n', n)}>"
   (if (leftable? config)
-    (let [n (peek old-stack) ; modifier
-          n' (first old-input) ; head
-          stack (pop old-stack)
-          relations (:relations (add-dependency-arc config n' n))]
-      (assert (not (empty? old-input)))
+    (let [^Word n (peek (.stack config)) ; modifier
+          ^Word n' (first (.input config))] ; head
+      (assert (not (empty? (.input config))))
       (-> config
-          (assoc :stack stack)
-          (assoc :relations relations)
-          (vary-meta update-in [:prev-actions] conj :left)))
+          (update-in [:stack] pop)
+          (add-dependency-arc n' n)))
     (reduce config)))
 
 (defn rightable? [^Configuration config]
   (and (not (empty? (:stack config)))
+       (not (empty? (:input config))) ;; ???
        (not (contains? (-> config :relations :modifier-to-head)
                        (first (-> config :input))))))
 
-(defn right [^Configuration
-             {old-stack :stack
-              old-input :input
-              old-relation :relation
-              :as config}]
+(defn right [^Configuration config]
   "Right operation for configuration
    <n | S, n' | I, A> => <n' | n | S, I, A \\cup {(n, n')}>"
   (if (rightable? config)
-    (let [n (peek old-stack) ; head
-          n' (first old-input) ; modifier
-          stack (conj old-stack n')
-          input (vec (rest old-input))
-          relations (:relations (add-dependency-arc config n n'))]
-      (assert (not (empty? old-input)))
+    (let [^Word n (peek (.stack config)) ; head
+          ^Word n' (first (.input config))] ; modifier
+      (assert (not (empty? (.input config))))
       (-> config
-          (assoc :stack stack)
-          (assoc :input input)
-          (assoc :relations relations)
-          (vary-meta update-in [:prev-actions] conj :right)))
+          (update-in [:stack] conj n')
+          (update-in [:input] rest)
+          (add-dependency-arc n n')))
     (reduce config)))
 
 (def action-mapping {:left left
@@ -132,8 +108,8 @@
 (defn next-gold-action [^Configuration {stack :stack input :input}]
   (if (empty? stack)
     :shift
-    (let [n (peek stack)
-          n' (first input)]
+    (let [^Word n (peek stack)
+          ^Word n' (first input)]
       (cond
        (= (:head n) (:idx n')) :left
        (= (:head n') (:idx n)) :right
@@ -143,7 +119,8 @@
        :reduce
        :else :shift))))
 
-(defn- get-gold-actions' [^Configuration {input :input :as config} actions]
+(defn- get-gold-actions'
+  [^Configuration {input :input :as ^Configuration config} actions]
   (if (empty? input)
     actions
     (let [next-action (next-gold-action config)]
@@ -152,3 +129,11 @@
 
 (defn get-gold-actions [^Configuration config]
   (get-gold-actions' config []))
+
+(defn get-possible-actions [^Configuration config]
+  (->> (conj []
+             (if (leftable? config) 0)
+             (if (rightable? config) 1)
+             (if (reducable? config) 2)
+             (if (not (empty? (:input config))) 3))
+       (remove nil?)))

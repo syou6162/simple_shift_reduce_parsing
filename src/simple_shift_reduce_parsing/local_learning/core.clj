@@ -107,7 +107,7 @@
     (debug "Finished loading model...")
     (doseq [k [1 2 4 8 16 32 64 128]]
       (let [decode (partial k-best-parse model k)
-            parsed-sentences (my-pmap decode original-sentences)]
+            parsed-sentences (map decode original-sentences)]
         (info (str "k = " k))
         (info (str "Dependency accuracy: " (get-dependency-accuracy original-sentences parsed-sentences)))
         (info (str "Complete accuracy: " (get-complete-accuracy original-sentences parsed-sentences)))))))
