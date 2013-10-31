@@ -129,3 +129,11 @@
 
 (defn get-gold-actions [^Configuration config]
   (get-gold-actions' config []))
+
+(defn get-possible-actions [^Configuration config]
+  (->> (conj []
+             (if (leftable? config) 0)
+             (if (rightable? config) 1)
+             (if (reducable? config) 2)
+             (if (not (empty? (:input config))) 3))
+       (remove nil?)))
