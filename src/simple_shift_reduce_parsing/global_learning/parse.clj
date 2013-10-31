@@ -12,7 +12,10 @@
   (->> fv
        (reduce
         (fn [result ^String k]
-          (let [id (common-feature/feature-to-id (str act-id "-and-" k))]
+          (let [^StringBuilder sb (new StringBuilder k)
+                id (-> (.append sb (str act-id))
+                       (.toString)
+                       (common-feature/feature-to-id))]
             (assoc result id 1)))
         {})))
 
