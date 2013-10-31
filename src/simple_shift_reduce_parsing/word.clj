@@ -11,7 +11,8 @@
 
 (defn make [^String surface ^String pos-tag ^long idx ^long head]
   (let [lemma (if (< 5 (count surface))
-                (-> surface (subs 0 5) normalize-num-expr))
+                (-> surface (subs 0 5) normalize-num-expr)
+                (-> surface normalize-num-expr))
         cpos-tag (subs pos-tag 0 1)]
     (Word. (normalize-num-expr surface) lemma
            pos-tag cpos-tag
