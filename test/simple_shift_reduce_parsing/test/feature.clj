@@ -4,19 +4,20 @@
   (:use [simple_shift_reduce_parsing.feature])
   (:use [clojure.test]))
 
+(require '[simple_shift_reduce_parsing.word :as word])
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
 (deftest test-feature
-  (let [sentence [{:surface :root, :pos-tag :root, :idx 0, :head -1}
-                  {:surface "ms.", :pos-tag "NNP", :idx 1, :head 2}
-                  {:surface "haag", :pos-tag "NNP", :idx 2, :head 3}
-                  {:surface "plays", :pos-tag "VBZ", :idx 3, :head 0}
-                  {:surface "elianti", :pos-tag "NNP", :idx 4, :head 3}
-                  {:surface ".", :pos-tag ".", :idx 5, :head 3}]
+  (let [sentence [(word/make "root" "root" 0 -1)
+                  (word/make "ms." "NNP" 1 2)
+                  (word/make "haag" "NNP" 2 3)
+                  (word/make "plays" "VBZ" 3 0)
+                  (word/make "elianti" "NNP" 4 3)
+                  (word/make "." "." 5 3)]
         configuration ((comp action/shift) (config/Configuration. [] sentence {}))]
     (are [x y] (= x y)
-         (zero-minus-word-feature configuration) :root
-         (zero-minus-pos-feature configuration) :root
+         (zero-minus-word-feature configuration) "root"
+         (zero-minus-pos-feature configuration) "root"
          (zero-plus-word-feature configuration) "ms."
          (zero-plus-pos-feature configuration) "NNP")))
 
