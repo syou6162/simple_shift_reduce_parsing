@@ -41,6 +41,11 @@
   (let [n (count stack)]
     (- n (- idx))))
 
+(defn safe-nth [coll idx]
+  (if (and (not (neg? idx))
+           (< idx (count coll)))
+    (nth coll idx)))
+
 (defmacro def-around-feature-fn [feature-name idx type]
   (if (neg? idx)
     `(defn ~feature-name [^Configuration configuration#]
@@ -48,7 +53,7 @@
          (if-let [w# (get-in stack# [(get-stack-idx stack# ~idx)])]
            (~type ^Word w#))))
     `(defn ~feature-name [^Configuration configuration#]
-       (if-let [w# (get-in configuration# [:input ~idx])]
+       (if-let [w# (safe-nth (.input configuration#) ~idx)]
          (~type ^Word w#)))))
 
 (defmacro def-conjunctive-feature-fn [& fs-list]
