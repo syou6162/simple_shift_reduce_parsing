@@ -10,22 +10,32 @@
 (import '[simple_shift_reduce_parsing.word Word])
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 
-(defstruct feature :type :str)
+(import '[TStringIntHashMap])
+(import '[TStringStringHashMapFactory])
+(import '[gnu.trove.map.hash TCustomHashMap])
 
-(let [mapping (atom {})]
-  (defn feature-to-id [feature]
-    (let [v (get @mapping feature)
-          max-id (count @mapping)]
-      (if v
-        v
-        (do (swap! mapping assoc feature max-id)
-            max-id))))
-  (defn save-feature-to-id [filename]
-    (serialize @mapping filename))
-  (defn load-feature-to-id [filename]
-    (reset! mapping (deserialize filename)))
+(let [^TStringIntHashMap mapping (TStringIntHashMap.)]
+  (defn max-feature-id [] (.size mapping))
+  (defn feature-to-id [^String feature]
+    (if (.containsKey mapping feature)
+      (.get mapping feature)
+      (let [v (max-feature-id)]
+        (.put mapping feature v)
+        v)))
+  (defn save-feature-to-id [^String filename]
+    (let [file-out (new java.io.FileOutputStream filename)
+          file-obj (new java.io.ObjectOutputStream file-out)]
+      (.writeExternal mapping file-obj)
+      (.close file-obj)
+      (.close file-out)))
+  (defn load-feature-to-id [^String filename]
+    (let [in-file (new java.io.FileInputStream filename)
+          in-obj (new java.io.ObjectInputStream in-file)]
+      (.readExternal mapping in-obj)
+      (.close in-obj)
+      (.close in-file)))
   (defn clear-feature-to-id! []
-    (reset! mapping {})))
+    (.clear mapping)))
 
 (defn get-stack-idx [stack idx]
   (let [n (count stack)]
