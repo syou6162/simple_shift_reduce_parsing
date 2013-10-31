@@ -185,24 +185,24 @@
        (defn ~cpos-feature-name [^Configuration config#]
          (-> config# ~feature-name :cpos-tag)))))
 
-(defn head-of-stack [^Configuration {stack :stack, relations :relations}]
-  (let [t (peek stack) ; top of the stack
-        th (get-in relations [:modifier-to-head t])] ; head of t
+(defn head-of-stack [^Configuration config]
+  (let [t (peek (.stack config)) ; top of the stack
+        th (get-in config [:relations :modifier-to-head t])] ; head of t
     th))
 
-(defn leftmost-dependent-of-stack [^Configuration {stack :stack, relations :relations}]
-  (let [t (peek stack) ; top of the stack
-        tl (first (get-in relations [:head-to-modifiers t]))]
+(defn leftmost-dependent-of-stack [^Configuration config]
+  (let [t (peek (.stack config)) ; top of the stack
+        tl (first (get-in config [:relations :head-to-modifiers t]))]
     tl))
 
-(defn rightmost-dependent-of-stack [^Configuration {stack :stack, relations :relations}]
-  (let [t (peek stack) ; top of the stack
-        tr (peek (get-in relations [:head-to-modifiers t]))]
+(defn rightmost-dependent-of-stack [^Configuration config]
+  (let [t (peek (.stack config)) ; top of the stack
+        tr (peek (get-in config [:relations :head-to-modifiers t]))]
     tr))
 
-(defn leftmost-dependent-of-input [^Configuration {input :input, relations :relations}]
-  (let [n (first input) ; next input token
-        nl (first (get (:head-to-modifiers relations) n))] ; leftmost dependent of n
+(defn leftmost-dependent-of-input [^Configuration config]
+  (let [n (first (.input config)) ; next input token
+        nl (first (get-in config [:relations :head-to-modifiers n]))] ; leftmost dependent of n
     nl))
 
 (def-both-word-and-pos-feature head-of-stack)
@@ -251,9 +251,9 @@
 (def three-words-features
   (into three-words-fine-features three-words-coarse-features))
 
-(defn distance-feature [^Configuration {stack :stack, input :input}]
-  (let [i (:idx (peek stack))
-        j (:idx (first input))
+(defn distance-feature [^Configuration config]
+  (let [i (:idx (peek (.stack config)))
+        j (:idx (first (.input config)))
         dist (if (and i j)
                (let [d (Math/abs (int (- i j)))]
                  (cond (> d 10) 11
