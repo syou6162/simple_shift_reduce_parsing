@@ -275,7 +275,7 @@
                        (> d 5) 6
                        :else d))
                -1)]
-    dist))
+    (str dist)))
 
 (def distance-fine-features
   [(def-conjunctive-feature-fn
