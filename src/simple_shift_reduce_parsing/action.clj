@@ -8,13 +8,13 @@
 (defn shift [^Configuration config]
   "Shift operation for configuration.
    <S, n | I, A> => <n | S, I , A>"
-  (let [^Word n (first (.input config))]
+  (let [n (int (peek (.input config)))]
     (-> config
         (update-in [:stack] conj n)
-        (update-in [:input] rest))))
+        (update-in [:input] pop))))
 
 (defn reducable? [^Configuration config]
-  (or (not (empty? (.stack config)))
+  (or (not (zero? (count (.stack config))))
       (contains? (-> config :relations :modifier-to-head)
                  (peek (.stack config)))))
 
@@ -22,13 +22,12 @@
   "Reduce operation for configuration
    <n | S, I , A> => <S, I, A>"
   (if (reducable? config)
-    (-> config
-        (update-in [:stack] pop))
+    (-> config (update-in [:stack] pop))
     (shift config)))
 
 (defn leftable? [^Configuration config]
-  (and (not (empty? (:stack config)))
-       (not (empty? (:input config)))
+  (and (not (zero? (count (:stack config))))
+       (not (zero? (count (:input config))))
        (not (contains? (-> config :relations :modifier-to-head)
                        (peek (:stack config))))))
 
@@ -36,30 +35,30 @@
   "Left operation for configuration
    <n | S, n' | I, A> => <S, n' | I, A \\cup {(n', n)}>"
   (if (leftable? config)
-    (let [^Word n (peek (.stack config)) ; modifier
-          ^Word n' (first (.input config))] ; head
-      (assert (not (empty? (.input config))))
+    (let [n (int (peek (.stack config))) ; modifier
+          n' (int (peek (.input config)))] ; head
+      (assert (not (zero? (count (.input config)))))
       (-> config
           (update-in [:stack] pop)
           (add-dependency-arc n' n)))
     (reduce config)))
 
 (defn rightable? [^Configuration config]
-  (and (not (empty? (:stack config)))
-       (not (empty? (:input config))) ;; ???
+  (and (not (zero? (count (:stack config))))
+       (not (zero? (count (:input config)))) ;; ???
        (not (contains? (-> config :relations :modifier-to-head)
-                       (first (-> config :input))))))
+                       (peek (-> config :input))))))
 
 (defn right [^Configuration config]
   "Right operation for configuration
    <n | S, n' | I, A> => <n' | n | S, I, A \\cup {(n, n')}>"
   (if (rightable? config)
-    (let [^Word n (peek (.stack config)) ; head
-          ^Word n' (first (.input config))] ; modifier
-      (assert (not (empty? (.input config))))
+    (let [n (int (peek (.stack config))) ; head
+          n' (int (peek (.input config)))] ; modifier
+      (assert (not (zero? (count (.input config)))))
       (-> config
           (update-in [:stack] conj n')
-          (update-in [:input] rest)
+          (update-in [:input] pop)
           (add-dependency-arc n n')))
     (reduce config)))
 
@@ -105,17 +104,26 @@
 ;;     # Rule 5: Default: return SHIFT
 ;;     return "shift"
 
-(defn next-gold-action [^Configuration {stack :stack input :input}]
+(defn next-gold-action [^Configuration
+                        {stack :stack input :input :as config}]
   (if (empty? stack)
     :shift
-    (let [^Word n (peek stack)
-          ^Word n' (first input)]
+    (let [^Word n (nth (:sentence config) (peek stack))
+          ^Word n' (nth (:sentence config) (peek input))]
       (cond
-       (= (:head n) (:idx n')) :left
-       (= (:head n') (:idx n)) :right
-       (some (fn [word]
-               (or (= (:head n') (:idx word))
-                   (= (:head word) (:idx n')))) stack)
+       (and (= (:head n) (:idx n'))
+            (leftable? config))
+       :left
+
+       (and (= (:head n') (:idx n))
+            (rightable? config))
+       :right
+
+       (and (reducable? config)
+            (some (fn [word-idx]
+                    (let [^Word word (nth (:sentence config) word-idx)]
+                      (or (= (:head n') (:idx word))
+                          (= (:head word) (:idx n'))))) stack))
        :reduce
        :else :shift))))
 
@@ -135,5 +143,5 @@
              (if (leftable? config) 0)
              (if (rightable? config) 1)
              (if (reducable? config) 2)
-             (if (not (empty? (:input config))) 3))
+             (if (not (zero? (count (:input config)))) 3))
        (remove nil?)))
