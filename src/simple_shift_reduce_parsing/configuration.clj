@@ -8,7 +8,7 @@
     [^clojure.lang.PersistentVector sentence
      ^clojure.lang.PersistentVector stack
      ^clojure.lang.PersistentQueue input
-     ^clojure.lang.PersistentArrayMap relations])
+     relations])
 
 (defn make-Configuration [input]
   (Configuration. input []
