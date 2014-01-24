@@ -22,6 +22,8 @@
         new-relations (-> relations
                           (update-in [:head-to-modifiers head-idx]
                                      (comp vec conj) modifier-idx)
+                          (update-in [:head-to-modifiers head-idx]
+                                     (comp vec sort))
                           (assoc-in [:modifier-to-head modifier-idx]
                                     head-idx))]
     (assoc config :relations new-relations)))
