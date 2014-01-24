@@ -21,9 +21,8 @@
 (defn reduce [^Configuration config]
   "Reduce operation for configuration
    <n | S, I , A> => <S, I, A>"
-  (if (reducable? config)
-    (-> config (update-in [:stack] pop))
-    (shift config)))
+  (-> config
+      (update-in [:stack] pop)))
 
 (defn leftable? [^Configuration config]
   (and (not (zero? (count (:stack config))))
@@ -34,14 +33,12 @@
 (defn left [^Configuration config]
   "Left operation for configuration
    <n | S, n' | I, A> => <S, n' | I, A \\cup {(n', n)}>"
-  (if (leftable? config)
-    (let [n (int (peek (.stack config))) ; modifier
-          n' (int (peek (.input config)))] ; head
-      (assert (not (zero? (count (.input config)))))
-      (-> config
-          (update-in [:stack] pop)
-          (add-dependency-arc n' n)))
-    (reduce config)))
+  (let [n (int (peek (.stack config))) ; modifier
+        n' (int (peek (.input config)))] ; head
+    (assert (not (zero? (count (.input config)))))
+    (-> config
+        (update-in [:stack] pop)
+        (add-dependency-arc n' n))))
 
 (defn rightable? [^Configuration config]
   (and (not (zero? (count (:stack config))))
@@ -52,15 +49,13 @@
 (defn right [^Configuration config]
   "Right operation for configuration
    <n | S, n' | I, A> => <n' | n | S, I, A \\cup {(n, n')}>"
-  (if (rightable? config)
-    (let [n (int (peek (.stack config))) ; head
-          n' (int (peek (.input config)))] ; modifier
-      (assert (not (zero? (count (.input config)))))
-      (-> config
-          (update-in [:stack] conj n')
-          (update-in [:input] pop)
-          (add-dependency-arc n n')))
-    (reduce config)))
+  (let [n (int (peek (.stack config))) ; head
+        n' (int (peek (.input config)))] ; modifier
+    (assert (not (zero? (count (.input config)))))
+    (-> config
+        (update-in [:stack] conj n')
+        (update-in [:input] pop)
+        (add-dependency-arc n n'))))
 
 (def action-mapping {:left left
                      :right right
