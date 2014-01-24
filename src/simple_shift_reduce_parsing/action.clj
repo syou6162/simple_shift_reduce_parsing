@@ -11,7 +11,8 @@
   (let [n (int (peek (.input config)))]
     (-> config
         (update-in [:stack] conj n)
-        (update-in [:input] pop))))
+        (update-in [:input] pop)
+        (vary-meta update-in [:history] (comp vec conj) :shift))))
 
 (defn reducable? [^Configuration config]
   (or (not (zero? (count (.stack config))))
@@ -22,7 +23,8 @@
   "Reduce operation for configuration
    <n | S, I , A> => <S, I, A>"
   (-> config
-      (update-in [:stack] pop)))
+      (update-in [:stack] pop)
+      (vary-meta update-in [:history] (comp vec conj) :reduce)))
 
 (defn leftable? [^Configuration config]
   (and (not (zero? (count (:stack config))))
@@ -38,7 +40,8 @@
     (assert (not (zero? (count (.input config)))))
     (-> config
         (update-in [:stack] pop)
-        (add-dependency-arc n' n))))
+        (add-dependency-arc n' n)
+        (vary-meta update-in [:history] (comp vec conj) :left))))
 
 (defn rightable? [^Configuration config]
   (and (not (zero? (count (:stack config))))
@@ -55,7 +58,8 @@
     (-> config
         (update-in [:stack] conj n')
         (update-in [:input] pop)
-        (add-dependency-arc n n'))))
+        (add-dependency-arc n n')
+        (vary-meta update-in [:history] (comp vec conj) :right))))
 
 (def action-mapping {:left left
                      :right right
