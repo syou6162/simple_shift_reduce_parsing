@@ -3,20 +3,22 @@
          :only (get-score)])
   (:use [simple_shift_reduce_parsing.global_learning.perceptron
          :only (inner-product)])
+  (:use [simple_shift_reduce_parsing.hash-feature :only (mod-feature-id)])
   (:require [simple_shift_reduce_parsing.action :as action])
-  (:require [simple_shift_reduce_parsing.feature :as common-feature])
+  (:require [simple_shift_reduce_parsing.hash-feature
+             :as common-feature])
   (:require [simple_shift_reduce_parsing.configuration :as config])
-  (:import [simple_shift_reduce_parsing.configuration Configuration]))
+  (:import [simple_shift_reduce_parsing.configuration Configuration])
+  (:import [simple_shift_reduce_parsing.word Word]))
+
+(import Jenkins)
 
 (defn get-fv [fv ^long act-id]
   (->> fv
        (reduce
-        (fn [result ^String k]
-          (let [^StringBuilder sb (new StringBuilder k)
-                id (-> (.append sb (str act-id))
-                       (.toString)
-                       (common-feature/feature-to-id))]
-            (assoc result id 1)))
+        (fn [result f]
+          (let [id (mod-feature-id (Jenkins/hashPair (int f) (int act-id)))]
+            (assoc result id (inc (get result id 0)))))
         {})))
 
 (defn error-count [sentence ^Configuration config]
