@@ -134,10 +134,35 @@
 (defn get-gold-actions [^Configuration config]
   (get-gold-actions' config []))
 
+(defn empty-input? [^Configuration config]
+  (zero? (count (:input config))))
+
+(defn empty-stack? [^Configuration config]
+  (zero? (count (:stack config))))
+
+(defn get-last-action [^Configuration config]
+  (-> config meta :history last))
+
 (defn get-possible-actions [^Configuration config]
-  (->> (conj []
-             (if (leftable? config) 0)
-             (if (rightable? config) 1)
-             (if (reducable? config) 2)
-             (if (not (zero? (count (:input config)))) 3))
-       (remove nil?)))
+  (let [possible-actions (atom #{})]
+    (if (and
+         (= (-> config :sentence count dec)
+            (-> config :relations :modifier-to-head count))
+         (not (empty-stack? config)))
+      (swap! possible-actions conj :reduce)
+      (do
+        (when (and (not (= (get-last-action config) :reduce))
+                   (not (empty-input? config)))
+          (swap! possible-actions conj :shift))
+        (when-not (empty-stack? config)
+          (when (and (not (empty-input? config)))
+            (swap! possible-actions conj :right))
+          (if (and
+               (not (contains? (-> config :relations :modifier-to-head)
+                               (-> config :stack peek)))
+               (not (-> config :input empty?)))
+            (swap! possible-actions conj :left)
+            (swap! possible-actions conj :reduce)))))
+    (assert (not (empty? (vec @possible-actions))))
+    (->> (vec @possible-actions)
+         (mapv action2id))))
