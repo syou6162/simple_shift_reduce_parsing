@@ -18,11 +18,24 @@
        (count)))
 
 (defn get-fv-diff [gold prediction]
-  (merge-with +
-              (-> gold meta :fv)
-              (->> (-> prediction meta :fv)
-                   (map (fn [[k v]] [k (- v)]))
-                   (into {}))))
+  (let [tuples [(-> gold meta :history)
+                (-> prediction meta :history)
+                (iterate inc 0)]
+        [_ _ first-wrong-idx] (->> (apply map vector tuples)
+                                   (drop-while (fn [[g p idx]] (= g p)))
+                                   (first))]
+    (if (nil? first-wrong-idx)
+      {} ;; completely same action sequence
+      (->> (map vector
+                (->> gold meta :fv (drop first-wrong-idx))
+                (->> prediction meta :fv (drop first-wrong-idx)))
+           (reduce
+            (fn [result [g p']]
+              (let [p (->> p'
+                           (map (fn [[k v]] [k (- v)]))
+                           (into {}))]
+                (merge-with + result g p)))
+            {})))))
 
 (defn get-step-size
   [weight gold prediction fv-diff]
