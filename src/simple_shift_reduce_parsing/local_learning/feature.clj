@@ -1,13 +1,27 @@
 (ns simple_shift_reduce_parsing.local_learning.feature
-  (:require [simple_shift_reduce_parsing.feature :as common-feature])
+  (:require [simple_shift_reduce_parsing.hash-feature :as common-feature])
   (:require [simple_shift_reduce_parsing.configuration :as config])
   (:require [simple_shift_reduce_parsing.action :as action])
-  (:import [simple_shift_reduce_parsing.configuration Configuration]))
+  (:import [simple_shift_reduce_parsing.configuration Configuration])
+  (:import [de.bwaldvogel.liblinear FeatureNode]))
 
 (defn get-fv [^Configuration config]
+  (let [tmp (->> config
+                 (common-feature/get-fv)
+                 (set)
+                 (sort)
+                 (vec))
+        a (make-array FeatureNode (count tmp))
+        n (count tmp)]
+    (doseq [idx (range n)]
+      (aset ^objects a idx (new FeatureNode (inc (nth tmp idx)) 1.0)))
+    a))
+
+(defn get-fv' [^Configuration config]
   (->> config
        (common-feature/get-fv)
-       (map common-feature/feature-to-id)
+       (set)
+       (sort)
        (map #(vector % 1))
        (vec)))
 
@@ -25,4 +39,4 @@
            next-config
            (inc actions-idx)
            (conj result [(action/action2id current-action)
-                         (get-fv config)])))))))
+                         (get-fv' config)])))))))

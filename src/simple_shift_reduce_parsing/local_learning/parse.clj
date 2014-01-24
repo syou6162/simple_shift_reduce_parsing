@@ -3,21 +3,21 @@
   (:require [simple_shift_reduce_parsing.configuration :as config])
   (:require [simple_shift_reduce_parsing.action :as action])
   (:use [liblinear.core
-         :only (classify predict-probability predict-class-probability)]))
+         :only (classify predict-probability predict-class-probability
+                         fast-classify)]))
 
 (import '[simple_shift_reduce_parsing.configuration Configuration])
 (import '[de.bwaldvogel.liblinear Model])
 
 (defn parse [^Model model sentence]
   (loop [^Configuration config (config/make-Configuration sentence)]
-    (if (empty? (:input config))
+    (if (zero? (count (:input config)))
       (let [pairs (-> config :relations :modifier-to-head)]
         (reduce (fn [sent [modifier head]]
-                  (assoc-in sent [(:idx modifier) :head] (:idx head)))
-                sentence
-                pairs))
-      (let [action-id (classify model (get-fv config))]
-        (recur ((action/id2action action-id) config))))))
+                  (assoc-in sent [modifier :head] head))
+                sentence pairs))
+      (let [action-id (int (fast-classify model (get-fv config)))]
+        (recur ((nth action/id2action action-id) config))))))
 
 (defn get-score [config]
   (-> config meta (get :score 0.0)))
@@ -49,9 +49,8 @@
       (let [^Configuration config (first k-best)
             pairs (-> config :relations :modifier-to-head)]
         (reduce (fn [sent [modifier head]]
-                  (assoc-in sent [(:idx modifier) :head] (:idx head)))
-                sentence
-                pairs))
+                  (assoc-in sent [modifier :head] head))
+                sentence pairs))
       (let [new-k-best (->> k-best
                             (mapv (fn [^Configuration config]
                                     (expand model sentence config)))
