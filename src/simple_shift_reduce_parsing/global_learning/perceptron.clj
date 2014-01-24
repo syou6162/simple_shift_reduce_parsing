@@ -38,7 +38,9 @@
                          (max 0.0)))]
     step-size))
 
-(defn update-weight [weight diff scale]
+(defn update-weight
+  "w = w + scale * (gold - prediction)"
+  [weight diff scale]
   (->> diff
        (mapv (fn [[k v]] [k (* scale v)]))
        (reduce (fn [result [fv-idx v]]
