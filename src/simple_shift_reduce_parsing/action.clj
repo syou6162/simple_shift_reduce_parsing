@@ -110,19 +110,16 @@
     (let [^Word n (nth (:sentence config) (peek stack))
           ^Word n' (nth (:sentence config) (peek input))]
       (cond
-       (and (= (:head n) (:idx n'))
-            (leftable? config))
+       (= (:head n) (:idx n'))
        :left
 
-       (and (= (:head n') (:idx n))
-            (rightable? config))
+       (= (:head n') (:idx n))
        :right
 
-       (and (reducable? config)
-            (some (fn [word-idx]
-                    (let [^Word word (nth (:sentence config) word-idx)]
-                      (or (= (:head n') (:idx word))
-                          (= (:head word) (:idx n'))))) stack))
+       (some (fn [word-idx]
+               (let [^Word word (nth (:sentence config) word-idx)]
+                 (and (or (= (:head n') (:idx word))
+                          (= (:head word) (:idx n')))))) stack)
        :reduce
        :else :shift))))
 
