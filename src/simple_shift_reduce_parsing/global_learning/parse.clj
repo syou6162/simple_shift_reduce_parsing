@@ -23,11 +23,11 @@
 
 (defn error-count [sentence ^Configuration config]
   (reduce
-   (fn [result [modifier head]]
-     (if (= (:head (nth sentence (:idx modifier))) ;; gold head
-            (:idx head)) ;; predict head
-       result
-       (inc result)))
+   (fn [result [modifier-idx head-idx]]
+     (let [^Word w (nth sentence modifier-idx)]
+       (if (= (.head w) head-idx)
+         result
+         (inc result))))
    0.0 (-> config :relations :modifier-to-head)))
 
 (defn expand [^Configuration config weight fv]
