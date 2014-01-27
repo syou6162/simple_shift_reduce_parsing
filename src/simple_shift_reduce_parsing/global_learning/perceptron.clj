@@ -45,47 +45,34 @@
                          (max 0.0)))]
     step-size))
 
-(defn update-weight'
+(defn update-weight!'
   "w = w + scale * (gold - prediction)"
-  [weight diff scale]
-  (->> diff
-       (mapv (fn [[k v]] [k (* scale v)]))
-       (reduce (fn [result [fv-idx v]]
-                 (assoc result fv-idx (+ v (get result fv-idx 0.0))))
-               weight)))
+  [^doubles weight diff scale]
+  (doseq [[fv-idx v] (->> diff
+                          (mapv (fn [[k v]] [k (* scale v)])))]
+    (aset weight fv-idx (+ v (aget weight fv-idx)))))
 
-(use '[simple_shift_reduce_parsing.global_learning.parse
-         :only (parse parse-for-training)])
-
-(defn update-weight [{iter :iter
-                      beam-size :beam-size
-                      weight :weight
-                      cum-weight :cum-weight
-                      training-sentences :training-sentences}]
-  (let [n (count training-sentences)]
-    (->> (range n)
-         (reduce
-          (fn [[w cum-w] idx]
-            (let [gold (nth training-sentences idx)
-                  prediction (parse-for-training w beam-size gold)
-                  fv-diff (get-fv-diff gold prediction)
-                  step-size (get-step-size w gold prediction fv-diff)
-                  diff (mapv (fn [[k v]] [k (* step-size v)]) fv-diff)
-                  new-w (update-weight' w diff 1.0)
-                  t (+ (* iter n) (inc idx))
-                  new-cum-w (update-weight' new-w diff t)]
-              [new-w new-cum-w]))
-          [weight cum-weight])
-         (time))))
+(defn update-weight! [{iter :iter
+                       beam-size :beam-size
+                       weight :weight
+                       cum-weight :cum-weight
+                       training-sentences :training-sentences}]
+  (let [n (count training-sentences)
+        sents (shuffle-with-random training-sentences)]
+    (doseq [idx (range n)]
+      (let [gold (nth sents idx)
+            prediction (parse-for-training weight beam-size gold)
+            fv-diff (get-fv-diff gold prediction)
+            step-size (get-step-size weight gold prediction fv-diff)
+            diff (mapv (fn [[k v]] [k (* step-size v)]) fv-diff)
+            t (+ (* iter n) (inc idx))]
+        (update-weight!' weight diff 1.0)
+        (update-weight!' cum-weight diff t)))))
 
 (defn get-averaged-weight
   "w = w_final - w_a / t"
-  [cum-count weight cum-weight]
+  [cum-count ^doubles weight ^doubles cum-weight]
   (if (or (zero? cum-count) (neg? cum-count))
     weight
-    (->> cum-weight
-         (reduce
-          (fn [result [k v]]
-            (let [new-v (- (get result k 0.0) (/ v cum-count))]
-              (assoc result k new-v)))
-          weight))))
+    (amap weight idx ret
+          (- (aget weight idx) (/ (aget cum-weight idx) cum-count)))))
