@@ -1,7 +1,7 @@
 (ns simple_shift_reduce_parsing.global_learning.parse
   (:use [simple_shift_reduce_parsing.local_learning.parse
          :only (get-score)])
-  (:use [simple_shift_reduce_parsing.global_learning.perceptron
+  (:use [simple_shift_reduce_parsing.global_learning.numeric
          :only (inner-product)])
   (:use [simple_shift_reduce_parsing.hash-feature :only (mod-feature-id)])
   (:require [simple_shift_reduce_parsing.action :as action])

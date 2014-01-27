@@ -1,16 +1,10 @@
 (ns simple_shift_reduce_parsing.global_learning.perceptron
-  (:import [simple_shift_reduce_parsing.word Word]))
-
-(defn inner-product [weight fv]
-  (reduce
-   (fn [result [fv-idx v]]
-     (+ result (* (get weight fv-idx 0.0) v)))
-   0.0 fv))
-
-(defn norm [fv]
-  (reduce
-   (fn [result [k v]] (+ result (* v v)))
-   0.0 fv))
+  (:use [simple_shift_reduce_parsing.global_learning.parse
+         :only (parse parse-for-training)])
+  (:use [simple_shift_reduce_parsing.global_learning.numeric
+         :only (inner-product norm)])
+  (:import [simple_shift_reduce_parsing.word Word])
+  (:use [clj-utils.random :only (shuffle-with-random)]))
 
 (defn error-count [gold prediction]
   (->> (map vector (rest gold) (rest prediction))
