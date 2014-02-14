@@ -13,11 +13,4 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [clj-logging-config "1.9.7"]
                  [net.sf.trove4j/trove4j "3.0.3"]]
-  :jvm-opts ["-Xms100G" "-Xmx100G" "-server"
-             "-XX:+UseConcMarkSweepGC"
-             "-XX:+CMSParallelRemarkEnabled"
-             "-XX:+UseParNewGC"
-             "-Dfile.encoding=UTF-8"]
-  :global-vars {*warn-on-reflection* true}
-  :main simple_shift_reduce_parsing.core)
   :java-source-paths ["src/java"]
