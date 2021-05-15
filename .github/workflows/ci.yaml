@@ -20,6 +20,4 @@ jobs:
       - name: Get leiningen version
         run: lein -v
       - name: Get leiningen version
-        run: lein run -m simple_shift_reduce_parsing.core --help
-      - name: Get leiningen version
         run: lein uberjar
