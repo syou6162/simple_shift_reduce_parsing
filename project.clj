@@ -13,7 +13,7 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [clj-logging-config "1.9.7"]
                  [net.sf.trove4j/trove4j "3.0.3"]]
-  :jvm-opts ["-Xms100G" "-Xmx100G" "-server"
+  :jvm-opts ["-Xms4G" "-Xmx4G" "-server"
              "-XX:+UseConcMarkSweepGC"
              "-XX:+CMSParallelRemarkEnabled"
              "-XX:+UseParNewGC"
